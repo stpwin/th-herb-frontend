@@ -1,22 +1,27 @@
-@import url('https://fonts.googleapis.com/css?family=Mitr&display=swap');
+@import url("https://fonts.googleapis.com/css?family=Mitr&display=swap");
 
 body {
   margin: 0;
-  font-family: 'Mitr', sans-serif;
+  font-family: "Mitr", sans-serif !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  
 }
-a {
-font-family: 'Mitr', sans-serif;
-}
+/* a {
+  font-family: "Mitr", sans-serif;
+} */
 
 p {
-    margin-bottom: 1rem;
+  margin-bottom: 1rem;
 }
 
-h1, h2, h3, h4, h5, span, p {
-  font-family: 'Mitr', sans-serif;
+h1,
+h2,
+h3,
+h4,
+h5,
+span,
+p {
+  /* font-family: "Mitr", sans-serif; */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

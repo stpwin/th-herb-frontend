@@ -1,7 +1,8 @@
 import firebase from 'firebase/app'
 import 'firebase/auth'
 import 'firebase/database'
-import 'firebase/firestore' // make sure you add this for firestore
+// import 'firebase/firestore' // make sure you add this for firestore
+import 'firebase/storage'
 import { firebase as fbConfig } from './config'
 
 let firebaseInstance

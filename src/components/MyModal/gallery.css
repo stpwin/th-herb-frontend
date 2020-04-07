@@ -1,0 +1,36 @@
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.gallery > img {
+  padding: 0.2rem 0.2rem;
+  cursor: pointer;
+
+  /* border-radius: 2px;
+  border-color: #007bff;
+  border-width: 0.2rem;
+  border-style: solid; */
+}
+
+.gallery > img:hover {
+  /* padding: 2rem 2rem; */
+  border-radius: 2px;
+  border-color: #007bff;
+  border-width: 0.2rem;
+  border-style: solid;
+}
+
+.gallery > img:active {
+  border-color: #007bff;
+  /* padding: 5rem 5rem; */
+}
+
+img > .active {
+  border-color: #007bff;
+}
+
+.gallery-container {
+  max-height: 780px;
+  overflow-y: scroll;
+}

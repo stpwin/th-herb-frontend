@@ -6,14 +6,13 @@ import firebase from 'firebase/app'
 import 'firebase/auth'
 import 'firebase/database'
 import 'firebase/firestore' // make sure you add this for firestore
-import { ReactReduxFirebaseProvider } from 'react-redux-firebase';
+import { ReactReduxFirebaseProvider } from 'react-redux-firebase'
 // import { createFirestoreInstance } from 'redux-firestore';
 import configureStore from './store'
 import initFirebase from './initFirebase'
 import { reduxFirebase as rfConfig } from './config'
 
-import './App.css';
-import "holderjs"
+import './App.css'
 
 import Navigation from "./components/Navigation"
 import MainSearch from "./components/MainSearch"

@@ -1,0 +1,32 @@
+.media {
+  background-color: white;
+}
+
+.title-badges {
+  margin-bottom: 0.5rem;
+  align-self: center;
+}
+
+.add-herbal-btn {
+  /* display: inline-block; */
+  padding: 0.25em 0.4em !important;
+  font-size: 75% !important;
+  font-weight: 700 !important;
+  line-height: 1.5 !important;
+  /* text-align: center; */
+  /* white-space: nowrap; */
+  /* vertical-align: baseline; */
+  /* border-radius: 0.25rem; */
+}
+
+.item-content {
+  max-height: 225px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+}
+
+.custom-badge {
+  line-height: 1.5 !important;
+}

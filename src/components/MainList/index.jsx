@@ -1,124 +1,262 @@
 import React, { Component } from 'react'
 
-import { Spinner, Container, Row, Col, Button, Modal } from "react-bootstrap"
+import { Spinner, Container, Row, Col, Button, Dropdown } from "react-bootstrap"
 import MediaItem from "./MediaItem"
+import { DiseaseModal, HerbalModal, RecipeModal } from "../MyModal"
+
+import "./mainList.css"
 
 const dataList = [
-    {
-        name: "โรคเบาหวาน",
-        content: "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like). It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).",
-        image: "holder.js/256x256?text=โรคเบาหวาน",
-        herbals: [
-            { path: "1", herbs: ["ใบมะยม", "ใบเหงือกปลาหมอ", "รากและต้นไมยราบ", "ใบเตยหอม"] },
-            { path: "2", herbs: ["ใบมะยม", "ใบเหงือกปลาหมอ", "รากและต้นไมยราบ", "ใบเตยหอม"] }
-        ],
-        uid: "1",
-        path: "โรคเบาหวาน"
-    },
-    {
-        name: "โรคเกี่ยวกับระดู",
-        content: "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like). It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).",
-        image: "holder.js/256x256?text=โรคเกี่ยวกับระดู",
-        herbals: [
-            { path: "1", herbs: ["ใบมะยม", "ใบเหงือกปลาหมอ", "รากและต้นไมยราบ", "ใบเตยหอม"] },
-            { path: "2", herbs: ["2", "3", "4", "5"] }
-        ],
-        uid: "2",
-        path: "โรคเกี่ยวกับระดู"
-    }
+  {
+    name: "เบาหวาน",
+    content: "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like). It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).",
+    image: "holder.js/256x256?text=เบาหวาน",
+    data: [
+      { path: "1", name: "ชื่อตำรับ", herbs: ["ใบมะยม", "ใบเหงือกปลาหมอ", "รากและต้นไมยราบ", "ใบเตยหอม"] },
+      { path: "2", herbs: ["ใบมะยม", "ใบเหงือกปลาหมอ", "รากและต้นไมยราบ", "ใบเตยหอม"] }
+    ],
+    uid: "1",
+    path: "เบาหวาน",
+    hidden: true
+  },
+  {
+    name: "เกี่ยวกับระดู",
+    content: "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like). It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).",
+    image: "holder.js/256x256?text=เกี่ยวกับระดู",
+    data: [
+      { path: "1", herbs: ["ใบมะยม", "ใบเหงือกปลาหมอ", "รากและต้นไมยราบ", "ใบเตยหอม"] },
+      { path: "2", herbs: ["2", "3", "4", "5"] }
+    ],
+    uid: "2",
+    path: "เกี่ยวกับระดู",
+    hidden: false
+  }
+]
+
+const herbList = [
+  {
+    name: "ใบมะยม",
+    content: "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like). It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).",
+    image: "holder.js/256x256?text=ใบมะยม",
+    data: [
+      { path: "1", name: "เกี่ยวกับระดู", herbs: ["ใบมะยม", "ใบเหงือกปลาหมอ", "รากและต้นไมยราบ", "ใบเตยหอม"] },
+      { path: "2", herbs: ["เบาหวาน"] }
+    ],
+    uid: "1",
+    path: "ใบมะยม",
+    hidden: false
+  },
+  {
+    name: "ใบเหงือกปลาหมอ",
+    content: "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like). It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).",
+    image: "holder.js/256x256?text=ใบเหงือกปลาหมอ",
+    data: [
+      { path: "1", name: "เบาหวาน", herbs: ["A"] },
+      { path: "2", herbs: ["B"] }
+    ],
+    uid: "2",
+    path: "ใบเหงือกปลาหมอ",
+    hidden: false
+  }
+]
+
+const showItems = [
+  { name: "โรค", ref: "ตำหรับ" },
+  { name: "สมุนไพร", ref: "รักษา" }
 ]
 
 export class MainList extends Component {
-    state = {
-        loading: false,
-        isAdmin: true,
-        addDataModalShow: false
+  state = {
+    loading: true,
+    isAdmin: true,
+    diseaseModal: true,
+    herbalModal: false,
+    recipeModal: false,
+    showBy: "โรค",
+    linkPrefix: "ตำหรับ",
+    data: dataList
+  }
+
+  componentDidMount() {
+    if (this.state.loading) {
+      setTimeout(() => this.setState({ loading: false }), 1000)
     }
+    this.handleAddDisease()
+  }
 
-    componentDidMount() {
-        if (this.state.loading) {
-            setTimeout(() => this.setState({ loading: false }), 1000)
-        }
+  handleHideDiseaseModal = () => {
+    this.setState({
+      diseaseModal: false
+    })
+  }
+
+  handleHideHerbalModal = () => {
+    this.setState({
+      herbalModal: false
+    })
+  }
+
+  handleHideRecipeModal = () => {
+    this.setState({
+      recipeModal: false
+    })
+  }
+
+  // handleModifyDataModalSubmit = () => {
+  //   //Do validate
+  //   this.setState({
+  //     modifyDataModalShow: false
+  //   })
+  // }
+
+  handleAddDisease = () => {
+    console.log("handleAddDisease")
+    this.setState({
+      diseaseModal: true
+    })
+  }
+
+  handleAddHerbal = () => {
+    console.log("handleAddHerbal")
+    this.setState({
+      herbalModal: true
+    })
+  }
+
+  handleAddRecipe = () => {
+    console.log("handleAddHerbal")
+    this.setState({
+      recipeModal: true
+    })
+  }
+
+  handleEdit = (e) => {
+    console.log("handleEdit", e.target.getAttribute("data-uid"))
+  }
+
+  handleDelete = (e) => {
+    console.log("handleDelete", e.target.getAttribute("data-uid"))
+  }
+
+  // handleHide = (e) => {
+  //   console.log("handleHide", e.target.getAttribute("data-uid"))
+  // }
+
+  handleAddRecipeOrDisease = () => {
+    if (this.state.showBy === "สมุนไพร") {
+      return this.handleAddDisease()
     }
+    console.log("handleAddRecipe")
+    this.setState({
+      modifyDataModalShow: true,
+      modifyDataModalSubmitText: "บันทึก",
+      modifyDataModalTitle: "เพิ่มตำรับ",
+    })
+  }
 
-    showAddDataModal = () => {
-        this.setState({
-            addDataModalShow: true
-        })
+  handleShowBySelect = (eventKey) => {
+    const { showBy } = this.state
+    if (showBy !== showItems[eventKey].name) {
+      this.setState({
+        showBy: showItems[eventKey].name,
+        linkPrefix: showItems[eventKey].ref,
+        data: showItems[eventKey].name === "โรค" ? dataList : herbList
+      })
     }
+    // console.log(eventKey)
+  }
 
-    handleAddDataModalHide = () => {
-        this.setState({
-            addDataModalShow: false
-        })
-    }
+  render() {
 
-    render() {
+    const { loading, isAdmin, diseaseModal, herbalModal, recipeModal, showBy, linkPrefix, data } = this.state
+    return (
+      <Container>
+        {isAdmin ? <Row className="justify-content-md-center">
+          <Col xs lg={2}>
+            <Button variant="outline-primary" block onClick={this.handleAddDisease}>เพิ่มโรค</Button>
+          </Col>
+          <Col xs lg={2}>
+            <Button variant="outline-primary" block onClick={this.handleAddHerbal}>เพิ่มสมุนไพร</Button>
+          </Col>
+          <Col xs lg={2}>
+            <Button variant="outline-primary" block onClick={this.handleAddRecipe}>เพิ่มตำรับ</Button>
+          </Col>
+        </Row> : null}
+        <div className="filter-item">
+          <Row>
+            <Col className="" style={{ display: "flex" }}>
+              <div className="mr-2" style={{ alignSelf: "center" }}>แสดงตาม</div>
+              <Dropdown>
+                <Dropdown.Toggle variant="outline-secondary">
+                  {showBy}
+                </Dropdown.Toggle>
+                <Dropdown.Menu id="dropdown-item-button" title="แสดงตาม">
+                  {showItems.map((item, i) => {
+                    if (item.name === showBy) {
+                      return <Dropdown.Item key={`showBy-${i}`} eventKey={i} active onSelect={this.handleShowBySelect}>{item.name}</Dropdown.Item>
+                    }
+                    return <Dropdown.Item key={`showBy-${i}`} eventKey={i} onSelect={this.handleShowBySelect}>{item.name}</Dropdown.Item>
+                  })}
+                </Dropdown.Menu>
+              </Dropdown>
+            </Col>
+            <Col></Col>
+            <Col></Col>
+          </Row>
+        </div>
 
-        const { loading, isAdmin, addDataModalShow } = this.state
-        return (
-            <Container>
-                {isAdmin ? <Row className="justify-content-md-center">
-                    <Col xs lg={2}>
-                        <Button variant="outline-primary" block onClick={this.showAddDataModal}>เพิ่ม</Button>
-                    </Col>
-                </Row> : null}
-                <Row>
-                    <Col>
-                        <div className="main-list">
-                            {loading ? <Spinner animation="grow" role="status" variant="success">
-                                <span className="sr-only">Loading...</span>
-                            </Spinner> :
-                                <ul className="list-unstyled">
-                                    {dataList.map(item => {
-                                        return <MediaItem title={item.name} content={item.content} herbals={item.herbals} path={item.path} image={item.image} showTool={isAdmin} />
-                                    })}
-                                </ul>
-                            }
-                        </div>
-                    </Col>
-                </Row>
-                <AddDataModal show={addDataModalShow} onHide={this.handleAddDataModalHide} />
-            </Container>
-        )
-    }
-}
-
-const AddDataModal = (props) => {
-    return <Modal backdrop="static" {...props} size="xl">
-        <Modal.Header closeButton>
-            <Modal.Title id="contained-modal-title-vcenter">
-                เพิ่มรายการ
-            </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-            <Container>
-                <Row className="show-grid">
-                    <Col xs={12} md={8}>
-                        <code>.col-xs-12 .col-md-8</code>
-                    </Col>
-                    <Col xs={6} md={4}>
-                        <code>.col-xs-6 .col-md-4</code>
-                    </Col>
-                </Row>
-
-                <Row className="show-grid">
-                    <Col xs={6} md={4}>
-                        <code>.col-xs-6 .col-md-4</code>
-                    </Col>
-                    <Col xs={6} md={4}>
-                        <code>.col-xs-6 .col-md-4</code>
-                    </Col>
-                    <Col xs={6} md={4}>
-                        <code>.col-xs-6 .col-md-4</code>
-                    </Col>
-                </Row>
-            </Container>
-        </Modal.Body>
-        <Modal.Footer>
-            <Button onClick={props.onHide}>Close</Button>
-        </Modal.Footer>
-    </Modal >
+        <Row>
+          <Col>
+            <div className="main-list">
+              {loading ? <Spinner animation="grow" role="status" variant="success">
+                <span className="sr-only">Loading...</span>
+              </Spinner> :
+                <ul className="list-unstyled">
+                  {data.map((item, i) => {
+                    if (!item.hidden || isAdmin) {
+                      return <MediaItem
+                        key={`media-${i}`}
+                        uid={`media-${i}`}
+                        prefix={linkPrefix}
+                        title={item.name}
+                        content={item.content}
+                        data={item.data}
+                        path={item.path}
+                        image={item.image}
+                        showTool={isAdmin}
+                        hidden={item.hidden}
+                        onAddRecipeOrDiseaseClick={this.handleAddRecipeOrDisease}
+                        onEditClick={this.handleEdit}
+                        onDeleteClick={this.handleDelete}
+                      // onHideClick={this.handleHide}
+                      />
+                    }
+                    return null;
+                  })}
+                </ul>
+              }
+            </div>
+          </Col>
+        </Row>
+        <DiseaseModal
+          show={diseaseModal}
+          onHide={this.handleHideDiseaseModal}
+        // onSubmit={this.handleModifyDataModalSubmit}
+        // showsubmit="true"
+        // submittext={modifyDataModalSubmitText}
+        // title={modifyDataModalTitle}
+        />
+        <HerbalModal
+          show={herbalModal}
+          onHide={this.handleHideHerbalModal}
+        />
+        <RecipeModal
+          show={recipeModal}
+          onHide={this.handleHideRecipeModal}
+        />
+      </Container>
+    )
+  }
 }
 
 export default MainList
