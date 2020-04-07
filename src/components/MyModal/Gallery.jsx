@@ -16,7 +16,7 @@ export class Gallery extends PureComponent {
   }
 
   getImages = () => {
-    const storageRef = this.props.firebase.storage().ref("thumb")
+    const storageRef = this.props.firebase.storage().ref(this.props.gallerypath)
     console.log("Fetching image...")
     storageRef.listAll().then(res => {
       res.items.forEach(itemRef => {

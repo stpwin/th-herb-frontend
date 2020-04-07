@@ -1,7 +1,7 @@
 import firebase from 'firebase/app'
 import 'firebase/auth'
-import 'firebase/database'
-// import 'firebase/firestore' // make sure you add this for firestore
+// import 'firebase/database'
+import 'firebase/firestore' // make sure you add this for firestore
 import 'firebase/storage'
 import { firebase as fbConfig } from './config'
 
@@ -24,12 +24,15 @@ export default function initFirebase(initialState, history) {
         // Initialize Firebase instance
         firebase.initializeApp(fbConfig)
 
+
         if (shouldUseEmulator) { // or window.location.hostname === 'localhost' if you want
             console.log('Using Firestore emulator')
             firebase.firestore().settings({
                 host: 'localhost:8080',
                 ssl: false
             })
+        } else {
+            firebase.firestore()
         }
         firebaseInstance = firebase
     }

@@ -69,11 +69,11 @@ export class MainList extends Component {
   state = {
     loading: true,
     isAdmin: true,
-    diseaseModal: true,
+    diseaseModal: false,
     herbalModal: false,
-    recipeModal: false,
+    recipeModal: true,
     showBy: "โรค",
-    linkPrefix: "ตำหรับ",
+    linkPrefix: "ตำรับ",
     data: dataList
   }
 
@@ -81,7 +81,6 @@ export class MainList extends Component {
     if (this.state.loading) {
       setTimeout(() => this.setState({ loading: false }), 1000)
     }
-    this.handleAddDisease()
   }
 
   handleHideDiseaseModal = () => {
@@ -147,11 +146,6 @@ export class MainList extends Component {
       return this.handleAddDisease()
     }
     console.log("handleAddRecipe")
-    this.setState({
-      modifyDataModalShow: true,
-      modifyDataModalSubmitText: "บันทึก",
-      modifyDataModalTitle: "เพิ่มตำรับ",
-    })
   }
 
   handleShowBySelect = (eventKey) => {

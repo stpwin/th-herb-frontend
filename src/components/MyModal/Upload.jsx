@@ -83,7 +83,7 @@ export class Upload extends PureComponent {
         }
       }
       const firebase = this.props.firebase
-      const storageRef = firebase.storage().ref("thumb")
+      const storageRef = firebase.storage().ref(this.props.uploadPath)
       const uploadTask = storageRef.child(uuidv4() + ".jpg").put(croppedImage, metadata)
       uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, function (snapshot) {
         // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
@@ -110,7 +110,7 @@ export class Upload extends PureComponent {
             uploaded: true,
             uploadSrc: downloadURL
           })
-          this.props.onUploadDone && this.props.onUploadDone(downloadURL, filename)
+          this.props.onUploadDone && this.props.onUploadDone(downloadURL, snapshot.ref.name)
         })
       })
       // console.log(croppedImage)

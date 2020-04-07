@@ -4,10 +4,10 @@ import React from 'react';
 import { Provider } from 'react-redux'
 import firebase from 'firebase/app'
 import 'firebase/auth'
-import 'firebase/database'
+import 'firebase/storage'
 import 'firebase/firestore' // make sure you add this for firestore
 import { ReactReduxFirebaseProvider } from 'react-redux-firebase'
-// import { createFirestoreInstance } from 'redux-firestore';
+import { createFirestoreInstance } from 'redux-firestore';
 import configureStore from './store'
 import initFirebase from './initFirebase'
 import { reduxFirebase as rfConfig } from './config'
@@ -23,12 +23,17 @@ const store = configureStore(initialState)
 // Initialize Firebase instance
 initFirebase()
 
+const rrfProps = {
+  firebase,
+  config: rfConfig,
+  dispatch: store.dispatch,
+  createFirestoreInstance // <- needed if using firestore
+}
+
 function App() {
   return (
     <Provider store={store}>
-      <ReactReduxFirebaseProvider firebase={firebase}
-        config={rfConfig}
-        dispatch={store.dispatch}>
+      <ReactReduxFirebaseProvider {...rrfProps}>
         <div className="App">
           <Navigation />
           <MainSearch />

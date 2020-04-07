@@ -14,7 +14,7 @@ export const MyModal = (props) => {
       </Container>
     </Modal.Body>
     <Modal.Footer>
-      {props.showsubmit === "true" ? <Button onClick={props.onSubmit} disabled={props.submitdisable}>{props.submittext}</Button> : null}
+      {props.showsubmit === "true" ? <Button onClick={props.onSubmit} disabled={props.submitdisable === "true"}>{props.submittext}</Button> : null}
       <Button onClick={props.onCancel} variant="secondary">{props.canceltext || 'ปิด'}</Button>
     </Modal.Footer>
   </Modal >
