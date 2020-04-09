@@ -17,11 +17,24 @@ import './App.css'
 import Navigation from "./components/Navigation"
 import MainSearch from "./components/MainSearch"
 import MainList from "./components/MainList"
+import Login from "./components/Login"
 
 const initialState = window && window.__INITIAL_STATE__ // set initial state here
 const store = configureStore(initialState)
 // Initialize Firebase instance
-initFirebase()
+const fbInstance = initFirebase()
+
+fbInstance.auth().onAuthStateChanged(authUser => {
+  console.log("onAuthStateChanged", authUser)
+  if (authUser) {
+
+    store.dispatch({ type: 'SET_AUTH_USER', authUser })
+    localStorage.setItem('authUser', JSON.stringify(authUser));
+  } else {
+    store.dispatch({ type: 'SET_AUTH_USER', authUser: null })
+    localStorage.removeItem('authUser');
+  }
+})
 
 const rrfProps = {
   firebase,
@@ -35,6 +48,7 @@ function App() {
     <Provider store={store}>
       <ReactReduxFirebaseProvider {...rrfProps}>
         <div className="App">
+          <Login />
           <Navigation />
           <MainSearch />
           <MainList />

@@ -3,7 +3,7 @@ import { Container, Button, Modal } from "react-bootstrap"
 
 export const MyModal = (props) => {
   return <Modal backdrop="static" {...props} size="xl">
-    <Modal.Header closeButton>
+    <Modal.Header>
       <Modal.Title id="contained-modal-title-vcenter">
         {props.title}
       </Modal.Title>

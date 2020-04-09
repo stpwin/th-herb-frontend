@@ -1,133 +1,123 @@
-import React, { Component } from 'react'
-import { MyModal } from "./MyModal"
-import { Form, Col, Row } from 'react-bootstrap'
+import React, { Component, Fragment } from 'react'
 import { compose } from 'redux'
 import { withFirestore } from 'react-redux-firebase'
 
-import "./tagInput.css"
+import { MyModal } from "./MyModal"
+import { Form, Col, Row, Button, Table } from 'react-bootstrap'
+import { ToolButtons } from "./ToolButtons"
+import { FaPlus } from 'react-icons/fa'
+import Select from 'react-select';
 
+const healGroup = [
+  { label: "ต้มน้ำดื่ม", value: "ต้มน้ำดื่ม" },
+  { label: "ดื่ม", value: "ดื่ม" },
+  { label: "ทาบริเวณที่มีอาการ", value: "ทาบริเวณที่มีอาการ" },
+  { label: "ปั้นเป็นเม็ด", value: "ปั้นเป็นเม็ด" },
+  { label: "ทาหรือแช่", value: "ทาหรือแช่" },
+  // { label: "ทา", value: "ทา" },
+  { label: "ต้มน้ำดื่มหรือกินสด", value: "ต้มน้ำดื่มหรือกินสด" },
+  { label: "อาบ", value: "อาบ" },
+  { label: "สูดดม", value: "สูดดม" },
+  { label: "ต้มหรือบดผสมน้ำผึ้ง", value: "ต้มหรือบดผสมน้ำผึ้ง" },
+  { label: "ทาหรือปิดแผล", value: "ทาหรือปิดแผล" },
+  // { label: "ฝนทา", value: "ฝนทา" },
+  { label: "พอก", value: "พอก" },
+  { label: "เช็ดตัว", value: "เช็ดตัว" },
+  { label: "ปิดปากแผล", value: "ปิดปากแผล" },
+  { label: "ทาน", value: "ทาน" },
+  { label: "แช่น้ำดื่ม", value: "แช่น้ำดื่ม" },
+]
 
-// const KeyCodes = {
-//   // comma: 188,
-//   enter: 13,
-// };
-
-// const delimiters = [KeyCodes.comma, KeyCodes.enter];
-
-// const suggestions = [
-//   {
-//     id: "ตำรับไม่มีชื่อ",
-//     text: "ตำรับไม่มีชื่อ"
-//   },
-//   {
-//     id: "ควยต้า",
-//     text: "ควยต้า"
-//   }
-// ]
 
 class RecipeModal extends Component {
   state = {
-    // tags: [],
-    showGallery: false,
+    showAdd: false,
     diseases: [],
+    herbals: [],
+    /** @type {firebase.firestore.DocumentReference[]} */
+    recipes: [],
     updating: false,
+    selectHerbals: [],
     data: {
       recipeName: "",
+      heal: "",
       description: "",
       diseaseRef: null,
       showPublic: true,
-    }
-  }
-
-  componentWillMount() {
-    const firestore = this.props.firestore
-    firestore.collection("diseases").onSnapshot(snapshot => {
-      const docs = snapshot.docs
-      console.log(docs)
-      this.setState({
-        diseases: docs
-      })
-    })
+      herbalRefs: []
+    },
+    /** @type {firebase.firestore.DocumentSnapshot} */
+    updateDocSnapshot: null,
   }
 
   componentDidMount() {
-
-    // const firestore = this.props.firestore
-    // firestore.collection("diseases").get().then(snapshot => {
-    //   const docs = snapshot.docs
-    //   console.log(docs)
-    //   this.setState({
-    //     diseases: docs
-    //   })
-    // })
+    /** @type {firebase.firestore.Firestore} */
+    const firestore = this.props.firestore
+    firestore.collection("diseases").orderBy('createdAt').onSnapshot(({ docs }) => {
+      const diseases = docs && docs.map(doc => {
+        const data = doc.data()
+        return { label: data.diseaseName, value: data.diseaseName, ref: doc.ref }
+      })
+      this.setState({ diseases })
+    })
+    firestore.collection("herbals").orderBy('createdAt').onSnapshot(({ docs }) => {
+      const herbals = docs.map(doc => {
+        const data = doc.data()
+        return { label: data.herbalName, value: data.herbalName, ref: doc.ref }
+      })
+      this.setState({ herbals })
+    })
+    firestore.collection('recipes').orderBy('createdAt').onSnapshot(({ docs: recipes }) => {
+      this.setState({ recipes })
+    })
   }
-  componentDidUpdate() {
-
-  }
-
-  // handleAddition = (tag) => {
-  //   this.setState(state => ({ tags: [...state.tags, tag] }))
-  // }
-
-  // handleDelete = (i) => {
-  //   const { tags } = this.state;
-  //   this.setState({
-  //     tags: tags.filter((tag, index) => index !== i),
-  //   });
-  // }
-
-  // handleDrag(tag, currPos, newPos) {
-  //   const tags = [...this.state.tags]
-  //   const newTags = tags.slice();
-
-  //   newTags.splice(currPos, 1)
-  //   newTags.splice(newPos, 0, tag)
-
-  //   // re-render
-  //   this.setState({ tags: newTags })
-  // }
-
-  // handleTagClick = (index) => {
-  //   console.log('The tag at index ' + index + ' was clicked')
-  // }
 
   handleChange = (e) => {
     this.setState({
-      data: {
-        ...this.state.data,
-        [e.target.name]: e.target.value
-      }
+      data: { ...this.state.data, [e.target.name]: e.target.value }
     })
   }
 
   handleShowPublicChange = (e) => {
     this.setState({
-      data: {
-        ...this.state.data,
-        showPublic: e.target.value === "true"
-      }
+      data: { ...this.state.data, showPublic: e.target.value === "true" }
     })
   }
 
   handleDiseaseChange = (e) => {
-    const diseaseRef = this.state.diseases[e.target.value].ref
-    console.log(diseaseRef)
-    console.log(e.target.value)
-    this.setState({
-      data: {
-        ...this.state.data,
-        diseaseRef
-      }
+    const diseaseRef = e && e.ref
+    this.setState({ data: { ...this.state.data, diseaseRef } })
+  }
+
+  handleSelectHerbalChange = e => {
+    const herbalRefs = e && e.map(item => {
+      return item.ref
     })
+    this.setState({ selectHerbals: e, data: { ...this.state.data, herbalRefs } })
+  }
+
+  handleHealChange = e => {
+    const heal = e && e.value
+    this.setState({ data: { ...this.state.data, heal } })
   }
 
   handleSubmit = () => {
+    /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
-    const { data } = this.state
+    const { data, updateDocSnapshot } = this.state
 
-    this.setState({
-      updating: true
-    })
+    this.setState({ updating: true })
+
+    if (updateDocSnapshot) {
+      updateDocSnapshot.ref.update({
+        ...data,
+        owner: 'Anonymous',
+        modifyAt: firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        this.setState({ showAdd: false, updating: false, })
+      })
+      return
+    }
 
     firestore.add({ collection: 'recipes' }, {
       ...data,
@@ -135,81 +125,100 @@ class RecipeModal extends Component {
       createdAt: firestore.FieldValue.serverTimestamp()
     }).then(doc => {
       console.log("doc:", doc)
-      if (data.diseaseRef) {
-        return firestore.runTransaction(t => {
-          return t.get(data.diseaseRef).then(disease_doc => {
-            const prevRefs = disease_doc.data().recipeRefs || []
-            t.update(data.diseaseRef, { recipeRefs: [...prevRefs, doc] })
-          })
-        }).then(result => {
-          console.log("success", result)
+      // if (data.diseaseRef) {
+      //   return firestore.runTransaction(t => {
+      //     return t.get(data.diseaseRef).then(disease_doc => {
+      //       const prevRefs = disease_doc.data().recipeRefs || []
+      //       t.update(data.diseaseRef, { recipeRefs: [...prevRefs, doc] })
+      //     })
+      //   }).then(result => {
+      //     console.log("success", result)
 
-          this.setState({
-            updating: false,
-          })
-          this.props.onHide()
-        }).catch(err => {
-          console.log(err)
-        })
-      }
-      console.log("this will not fire")
-      this.setState({
-        updating: false,
-      })
-      this.props.onHide()
+      //     this.setState({
+      //       updating: false,
+      //     })
+      //     this.props.onHide()
+      //   }).catch(err => {
+      //     console.log(err)
+      //   })
+      // }
+      console.log("recipe added")
+      this.setState({ updating: false, })
+      // this.props.onHide()
+    })
+  }
+
+  handleShowAdd = () => { this.setState({ showAdd: true }) }
+
+  handleHideAdd = () => { this.setState({ showAdd: false }) }
+
+  /**
+* @param {firebase.firestore.DocumentSnapshot} snapshot
+*/
+  handleEdit = snapshot => {
+    const data = snapshot.data()
+    this.setState({
+      data,
+      showAdd: true,
+      updateDocSnapshot: snapshot
+    })
+  }
+
+  /**
+  * @param {firebase.firestore.DocumentSnapshot} snapshot
+  */
+  handleDelete = snapshot => {
+    if (!snapshot) return
+    snapshot.ref.delete().then(() => {
+      console.log("deleted")
+    }).catch(err => {
+      console.log("deleted fail:", err)
     })
   }
 
   render() {
-    const { recipeName, description, diseases, tags, updating } = this.state
+    const { data, showAdd, diseases, selectHerbals, recipes, herbals, updating } = this.state
     const { onHide } = this.props
-    let modalBody = <RecipeForm tags={tags}
-      recipeName={recipeName}
-      description={description}
-      diseases={diseases}
-      onChange={this.handleChange}
-      // handleDelete={this.handleDelete}
-      // handleAddition={this.handleAddition}
-      // handleTagClick={this.handleTagClick}
-      handleShowPublicChange={this.handleShowPublicChange}
-      handleDiseaseChange={this.handleDiseaseChange}
-    />
-    const modalTitle = "เพิ่มตำรับ"
+
+    const modalTitle = "จัดการข้อมูลตำรับ"
     let modalSubTitle = ""
-    let submittext = "บันทึก"
-    let showsubmit = "true"
+    let submittext = ""
+    let showsubmit = "false"
     let canceltext = "ปิด"
     let onCancel = onHide
     let submitdisable = updating.toString()
 
-    // if (showUpload) {
-    //   modalSubTitle = " > อัพโหลดภาพ"
-    //   submittext = "เสร็จสิ้น"
-    //   showsubmit = "false"
-    //   canceltext = "กลับ"
-    //   onCancel = this.handleHideUpload
-    //   modalBody = <Upload onUploadDone={this.handleUploadDone} uploadPath={storageConfig.disease_images_path} />
-    //   submitdisable = "false"
+    let modalBody = <RecipeList
+      recipes={recipes}
+      handleAdd={this.handleShowAdd}
+      handleEdit={this.handleEdit}
+      handleDelete={this.handleDelete}
+    />
 
-    // } else if (showGallery) {
-    //   modalSubTitle = " > เลือกภาพ"
-    //   onCancel = this.handleHideGallery
-    //   submittext = "เลือกภาพ"
-    //   showsubmit = "false"
-    //   canceltext = "กลับ"
-    //   modalBody =
-    //     <Gallery
-    //       onClick={this.handleImageClick}
-    //       galleryImages={galleryImages}
-    //       fetchImage={fetchGalleryImage}
-    //       onFetchDone={this.handleGalleryFetchDone}
-    //       gallerypath={storageConfig.disease_images_path}
-    //     />
-    // }
+    if (showAdd) {
+      modalSubTitle = "เพิ่มตำรับ"
+      submittext = "บันทึก"
+      showsubmit = "true"
+      canceltext = "กลับ"
+      onCancel = this.handleHideAdd
+
+      modalBody = <RecipeForm
+        data={data}
+        herbals={herbals}
+        selectHerbals={selectHerbals}
+        diseases={diseases}
+        onChange={this.handleChange}
+        handleShowPublicChange={this.handleShowPublicChange}
+        handleDiseaseChange={this.handleDiseaseChange}
+        onSelectHerbalChange={this.handleSelectHerbalChange}
+        handleHealChange={this.handleHealChange}
+      />
+    }
+
     return <MyModal
       show={this.props.show}
       body={modalBody}
-      title={modalTitle + modalSubTitle}
+      title={modalTitle + (modalSubTitle ? " > " + modalSubTitle : "")}
       submittext={submittext}
       showsubmit={showsubmit}
       canceltext={canceltext}
@@ -221,73 +230,135 @@ class RecipeModal extends Component {
   }
 }
 
-const RecipeForm = ({ recipeName, description, showPublic, onChange, diseases, tags, handleDelete, handleAddition, handleTagClick, handleShowPublicChange, handleDiseaseChange }) => <Form>
-  <Form.Group as={Row}>
-    <Form.Label column sm="2">ชื่อตำรับ</Form.Label>
-    <Col sm="10">
-      <Form.Control type="text" placeholder="ชื่อตำรับ" name="recipeName" value={recipeName} onChange={onChange} />
-    </Col>
-  </Form.Group>
+const RecipeList = ({ recipes, handleAdd, handleEdit, handleDelete }) =>
+  <Fragment>
+    <div className="mb-1 text-right">
+      <Button variant="success" onClick={handleAdd}><FaPlus /></Button>
+    </div>
+    <div style={{ height: "40rem", overflowY: "auto" }}>
+      <Table bordered striped size="sm" responsive hover >
+        <thead>
+          <tr>
+            <th style={{ width: "5%" }}>#</th>
+            <th>ชื่อตำรับ</th>
+            <th>รักษาโรค</th>
+            <th>วิธีการ</th>
+            {/* <th>สมุนไพร</th> */}
+            <th style={{ width: "10%" }}>สาธารณะ</th>
+            <th style={{ width: "10%" }}>เครื่องมือ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {(recipes && recipes.length > 0 && recipes.map((recipe, index) => {
+            const data = recipe.data()
+            /** @type {firebase.firestore.DocumentReference} */
+            const diseaseRef = data.diseaseRef
+            diseaseRef.get().then(snapshot => {
+              console.log(snapshot.data())
+            })
+            return <tr key={`recipe-${index}`}>
+              <td className="text-center">{index + 1}</td>
+              <td>{data.recipeName}</td>
+              <td>{"diseaseName"}</td>
+              <td>{data.heal}</td>
+              {/* <td>{data.description}</td> */}
+              <td>{data.showPublic ? "แสดง" : "ไม่แสดง"}</td>
+              <td >
+                <div style={{ alignSelf: "center" }} className="text-center">
+                  <ToolButtons onDelete={() => handleDelete(recipe)} onEdit={() => handleEdit(recipe)} />
+                </div>
+              </td>
+            </tr>
+          })) ||
+            (<tr>
+              <td colSpan={7} className="text-center py-5">ไม่มีข้อมูล</td>
+            </tr>)}
+        </tbody>
+      </Table>
+    </div>
+  </Fragment>
 
-  <Form.Group as={Row}>
-    <Form.Label column sm="2">รายละเอียด</Form.Label>
-    <Col sm="10">
-      <Form.Control as="textarea" rows="3" name="description" value={description} onChange={onChange} />
-    </Col>
-  </Form.Group>
+const RecipeForm = ({ data: { recipeName, description, showPublic, heal }, selectHerbals, diseases, herbals, onChange, handleShowPublicChange, handleDiseaseChange, onSelectHerbalChange, handleHealChange }) =>
+  <Form autoComplete="off">
+    <Form.Group as={Row}>
+      <Form.Label column sm="2">ชื่อตำรับ</Form.Label>
+      <Col sm="10">
+        <Form.Control type="text" placeholder="ชื่อตำรับ" alt="ชื่อตำรับ" name="recipeName" value={recipeName} onChange={onChange} />
+      </Col>
+    </Form.Group>
+    <Form.Group as={Row}>
+      <Form.Label column sm="2">รักษาโรค</Form.Label>
+      <Col sm="3">
+        <Select
+          closeMenuOnSelect={true}
+          placeholder="เลือกโรค"
+          noOptionsMessage={() => "ไม่มีตัวเลือก"}
+          loadingMessage={() => "กำลังโหลด"}
+          isClearable={true}
+          backspaceRemovesValue={false}
+          options={diseases}
+          // defaultValue={}
+          name="diseases"
+          onChange={handleDiseaseChange}
+        />
+      </Col>
+    </Form.Group>
 
-  <Form.Group as={Row}>
-    <Form.Label column sm="2">รักษาโรค</Form.Label>
-    <Col sm="3">
-      <Form.Control as="select" name="diseases" onChange={handleDiseaseChange}>
-        <option key={`diseas-none`} value="">เลือกโรค</option>
-        {diseases && diseases.length > 0 && diseases.map((item, index) => {
-          return <option key={`diseas-${index}`} value={index}>{item.id}</option>
-        })}
-      </Form.Control>
-    </Col>
-  </Form.Group>
+    <Form.Group as={Row}>
+      <Form.Label column sm="2">วิธีการรักษา</Form.Label>
+      <Col sm="3">
+        <Select
+          closeMenuOnSelect={true}
+          placeholder="เลือกวิธีการรักษา"
+          noOptionsMessage={() => "ไม่มีตัวเลือก"}
+          loadingMessage={() => "กำลังโหลด"}
+          isClearable={true}
+          backspaceRemovesValue={false}
+          options={healGroup}
+          defaultValue={heal}
+          name="heal_select"
+          onChange={handleHealChange}
+        />
+      </Col>
+    </Form.Group>
 
-  {/* <Form.Group as={Row}>
-    <Form.Label column sm="2">สมุนไพร</Form.Label>
-    <Col sm="3">
-      <Form.Control as="select" name="herbals" value={herbals} onChange={handleHerbalChange}>
-        <option value="true">x</option>
-        <option value="false">x</option>
-      </Form.Control>
-    </Col>
-  </Form.Group> */}
+    <Form.Group as={Row}>
+      <Form.Label column sm="2">ขั้นตอนการรักษา</Form.Label>
+      <Col sm="10">
+        <Form.Control as="textarea" rows="10" name="description" value={description} onChange={onChange} />
+      </Col>
+    </Form.Group>
 
-  <Form.Group as={Row}>
-    <Form.Label column sm="2">แสดงต่อสาธารณะ</Form.Label>
-    <Col sm="3">
-      <Form.Control as="select" name="showPublic" value={showPublic} onChange={handleShowPublicChange}>
-        <option value="true">แสดง</option>
-        <option value="false">ไม่แสดง</option>
-      </Form.Control>
-    </Col>
-  </Form.Group>
+    <Form.Group as={Row}>
+      <Form.Label column sm="2">สมุนไพร</Form.Label>
+      <Col sm="10">
+        <Select
+          closeMenuOnSelect={false}
+          placeholder="เลือกสมุนไพร"
+          noOptionsMessage={() => "ไม่มีตัวเลือก"}
+          loadingMessage={() => "กำลังโหลด"}
+          isClearable={true}
+          backspaceRemovesValue={false}
+          options={herbals}
+          defaultValue={selectHerbals}
+          name="herbals_select"
+          onChange={onSelectHerbalChange}
+          isMulti
+        />
+      </Col>
+    </Form.Group>
 
-
-  {/* <Form.Group as={Row}>
-    <Form.Label column sm="2">ตำรับ</Form.Label>
-    <Col sm="10">
-      <ReactTags
-        placeholder="ตำรับ"
-        tags={tags}
-        suggestions={suggestions}
-        delimiters={delimiters}
-        handleDelete={handleDelete}
-        handleAddition={handleAddition}
-        handleTagClick={handleTagClick}
-        allowDragDrop={false}
-        allowUnique={true}
-        allowDeleteFromEmptyInput={false}
-      />
-    </Col>
-  </Form.Group> */}
-
-</Form>
+    <Form.Group as={Row}>
+      <Form.Label column sm="2">แสดงต่อสาธารณะ</Form.Label>
+      <Col sm="3">
+        <Form.Control as="select" name="showPublic" value={showPublic} onChange={handleShowPublicChange}>
+          <option value="true">แสดง</option>
+          <option value="false">ไม่แสดง</option>
+        </Form.Control>
+      </Col>
+    </Form.Group>
+    <Form.Control type="hidden" value="something"></Form.Control>
+  </Form>
 
 const enhance = compose(
   withFirestore,

@@ -138,9 +138,9 @@ export class Upload extends PureComponent {
         </Row>
         <Row className="justify-content-center mb-3">
           <Col md={4}>
-            <Form.Group controlId="customFile" className="custom-file">
-              <Form.Control type="file" className="custom-file-input" onChange={this.onSelectFile} />
-              <Form.Label className="custom-file-label">เลือกไฟล์</Form.Label>
+            <Form.Group controlId="customFile">
+              <Form.Control type="file" onChange={this.onSelectFile} />
+              {/* <Form.Label>เลือกไฟล์</Form.Label> */}
             </Form.Group>
           </Col>
         </Row>

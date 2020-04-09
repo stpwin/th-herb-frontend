@@ -1,83 +1,76 @@
-import React, { Component } from 'react'
-import { MyModal } from "./MyModal"
-import { Form, Col, Row, Button, Image } from 'react-bootstrap'
+import React, { Component, Fragment } from 'react'
 import { compose } from 'redux'
 import { withFirestore } from 'react-redux-firebase'
-
 import { storageConfig } from "../../config"
+import * as Holder from "holderjs"
+import { getDownloadUrl } from "../../utils"
 
+import { MyModal } from "./MyModal"
+import { Form, Col, Row, Button, Image, Table } from 'react-bootstrap'
+import { ToolButtons } from "./ToolButtons"
+import { FaPlus } from 'react-icons/fa'
 import Gallery from "./Gallery"
 import Upload from "./Upload"
 
-import "./tagInput.css"
-
-import * as Holder from "holderjs"
-
+const images_path = storageConfig.herbal_images_path
 class HerbalModal extends Component {
   state = {
-    showPublic: true,
+    showAdd: false,
     showGallery: false,
     showUpload: false,
     selectedImageSrc: "",
     galleryImages: [],
     fetchGalleryImage: true,
     updating: false,
+    herbals: [],
+    /** @type {firebase.firestore.DocumentSnapshot} */
+    updateDocSnapshot: null,
     data: {
       herbalName: "",
       scientificName: "",
+      nativeName: "",
       description: "",
       image: "",
+      showPublic: true,
     }
   }
 
   componentDidMount() {
-    Holder.run({
-      images: ".image-preview"
+    Holder.run({ images: ".image-preview" })
+    /** @type {firebase.firestore.Firestore} */
+    const firestore = this.props.firestore
+    firestore.collection('herbals').orderBy('createdAt').onSnapshot(({ docs: herbals }) => {
+      this.setState({
+        herbals
+      })
     })
   }
   componentDidUpdate() {
-    Holder.run({
-      images: ".image-preview"
-    })
+    Holder.run({ images: ".image-preview" })
   }
 
   handleChange = (e) => {
-    this.setState({
-      data: { ...this.state.data, [e.target.name]: e.target.value }
-    })
-
+    this.setState({ data: { ...this.state.data, [e.target.name]: e.target.value } })
   }
 
   handleShowPublicChange = (e) => {
-    this.setState({
-      data: {
-        ...this.state.data,
-        showPublic: e.target.value === "true"
-      }
-    })
+    this.setState({ data: { ...this.state.data, showPublic: e.target.value === "true" } })
   }
 
   handleShowGallery = () => {
-    this.setState({
-      showGallery: true
-    })
+    this.setState({ showAdd: false, showGallery: true })
   }
+
   handleHideGallery = () => {
-    this.setState({
-      showGallery: false
-    })
+    this.setState({ showAdd: true, showGallery: false })
   }
 
   handleShowUpload = () => {
-    this.setState({
-      showUpload: true
-    })
+    this.setState({ showAdd: false, showUpload: true })
   }
 
   handleHideUpload = () => {
-    this.setState({
-      showUpload: false
-    })
+    this.setState({ showAdd: true, showUpload: false })
   }
 
   handleUploadDone = (url, name) => {
@@ -99,6 +92,7 @@ class HerbalModal extends Component {
   handleImageClick = (e) => {
     const imageName = e.target.getAttribute("data-img-name")
     this.setState({
+      showAdd: true,
       showGallery: false,
       selectedImageSrc: e.target.src,
       data: { ...this.state.data, image: imageName }
@@ -106,57 +100,120 @@ class HerbalModal extends Component {
   }
 
   handleSubmit = () => {
+    /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
-    const { data, data: { herbalName } } = this.state
+    const { data, updateDocSnapshot } = this.state
+    this.setState({ updating: true })
 
-    this.setState({
-      updating: true
-    })
+    if (updateDocSnapshot) {
+      updateDocSnapshot.ref.update({
+        ...data,
+        owner: 'Anonymous',
+        modifyAt: firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        this.setState({ showAdd: false, updating: false, })
+      })
+      return
+    }
 
-    firestore.set({ collection: 'herbals', doc: herbalName }, {
+    firestore.collection('herbals').add({
       ...data,
       owner: 'Anonymous',
       createdAt: firestore.FieldValue.serverTimestamp()
     }).then(() => {
-      this.setState({
-        updating: false,
-      })
-      this.props.onHide()
+      this.setState({ showAdd: false, updating: false, })
+      // this.props.onHide()
+    })
+  }
+
+  handleShowAdd = () => {
+    this.setState({
+      showAdd: true,
+      data: {
+        diseaseName: "",
+        description: "",
+        showPublic: true,
+        image: "",
+      },
+      selectedImageSrc: "",
+      updateDocSnapshot: null
+    })
+  }
+
+  handleHideAdd = () => { this.setState({ showAdd: false }) }
+
+  /**
+  * @param {firebase.firestore.DocumentSnapshot} snapshot
+  */
+  handleEdit = snapshot => {
+    const data = snapshot.data()
+    this.setState({
+      data,
+      selectedImageSrc: getDownloadUrl(images_path, data.image),
+      showAdd: true,
+      updateDocSnapshot: snapshot
+    })
+  }
+
+  /**
+  * @param {firebase.firestore.DocumentSnapshot} snapshot
+  */
+  handleDelete = snapshot => {
+    if (!snapshot) return
+    snapshot.ref.delete().then(() => {
+      console.log("deleted")
+    }).catch(err => {
+      console.log("deleted fail:", err)
     })
   }
 
   render() {
-    const { data: { herbalName, scientificName, description }, tags, showGallery, showUpload, galleryImages, fetchGalleryImage, selectedImageSrc, updating } = this.state
+    const { data, herbals, updateDocSnapshot, showAdd, showGallery, showUpload, galleryImages, fetchGalleryImage, selectedImageSrc, updating } = this.state
     const { onHide } = this.props
-    let modalBody = <HerbalForm tags={tags}
-      herbalName={herbalName}
-      scientificName={scientificName}
-      description={description}
-      onChange={this.handleChange}
-      selectedImageSrc={selectedImageSrc}
-      handleShowGallery={this.handleShowGallery}
-      handleShowUpload={this.handleShowUpload}
-      handleShowPublicChange={this.handleShowPublicChange}
-    />
-    const modalTitle = "เพิ่มสมุนไพร"
+
+
+    const modalTitle = "จัดการข้อมูลสมุนไพร"
     let modalSubTitle = ""
-    let submittext = "บันทึก"
-    let showsubmit = "true"
+    let submittext = ""
+    let showsubmit = "false"
     let canceltext = "ปิด"
     let onCancel = onHide
     let submitdisable = updating.toString()
 
-    if (showUpload) {
-      modalSubTitle = " > อัพโหลดภาพ"
+    let modalBody = <HerbalList
+      herbals={herbals}
+      handleAdd={this.handleShowAdd}
+      handleEdit={this.handleEdit}
+      handleDelete={this.handleDelete}
+    />
+
+    const subtitle = updateDocSnapshot ? "แก้ไขข้อมูลสมุนไพร" : "เพิ่มข้อมูลสมุนไพร"
+    if (showAdd) {
+      modalBody = <HerbalForm
+        data={data}
+        onChange={this.handleChange}
+        selectedImageSrc={selectedImageSrc}
+        handleShowGallery={this.handleShowGallery}
+        handleShowUpload={this.handleShowUpload}
+        handleShowPublicChange={this.handleShowPublicChange}
+      />
+      modalSubTitle = subtitle
+      submittext = "บันทึก"
+      showsubmit = "true"
+      canceltext = "กลับ"
+      onCancel = this.handleHideAdd
+
+    } else if (showUpload) {
+      modalSubTitle = subtitle + " > อัพโหลดภาพ"
       submittext = "เสร็จสิ้น"
       showsubmit = "false"
       canceltext = "กลับ"
       onCancel = this.handleHideUpload
-      modalBody = <Upload onUploadDone={this.handleUploadDone} uploadPath={storageConfig.herbal_images_path} />
+      modalBody = <Upload onUploadDone={this.handleUploadDone} uploadPath={images_path} />
       submitdisable = "false"
 
     } else if (showGallery) {
-      modalSubTitle = " > เลือกภาพ"
+      modalSubTitle = subtitle + " > เลือกภาพ"
       onCancel = this.handleHideGallery
       submittext = "เลือกภาพ"
       showsubmit = "false"
@@ -173,7 +230,7 @@ class HerbalModal extends Component {
     return <MyModal
       show={this.props.show}
       body={modalBody}
-      title={modalTitle + modalSubTitle}
+      title={modalTitle + (modalSubTitle ? " > " + modalSubTitle : "")}
       submittext={submittext}
       showsubmit={showsubmit}
       canceltext={canceltext}
@@ -185,7 +242,50 @@ class HerbalModal extends Component {
   }
 }
 
-const HerbalForm = ({ herbalName, scientificName, description, showPublic, selectedImageSrc, onChange, handleShowPublicChange, handleShowGallery, handleShowUpload }) => <Form>
+const HerbalList = ({ herbals, handleAdd, handleEdit, handleDelete }) =>
+  <Fragment>
+    <div className="mb-1 text-right">
+      <Button variant="success" onClick={handleAdd}><FaPlus /></Button>
+    </div>
+    <div style={{ height: "40rem", overflowY: "auto" }}>
+      <Table bordered striped size="sm" responsive hover >
+        <thead>
+          <tr>
+            <th style={{ width: "5%" }}>#</th>
+            <th>ชื่อสมุนไพร</th>
+            <th>ชื่อวิทยาศาสตร์</th>
+            <th>ชื่อท้องถิ่น</th>
+            <th>สรรพคุณ</th>
+            <th style={{ width: "10%" }}>สาธารณะ</th>
+            <th style={{ width: "10%" }}>เครื่องมือ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {(herbals && herbals.length > 0 && herbals.map((herbal, index) => {
+            const data = herbal.data()
+            return <tr key={`herbal-${index}`}>
+              <td className="text-center">{index + 1}</td>
+              <td>{data.herbalName}</td>
+              <td>{data.scientificName}</td>
+              <td>{data.nativeName}</td>
+              <td>{data.description}</td>
+              <td>{data.showPublic ? "แสดง" : "ไม่แสดง"}</td>
+              <td >
+                <div style={{ alignSelf: "center" }} className="text-center">
+                  <ToolButtons onDelete={() => handleDelete(herbal)} onEdit={() => handleEdit(herbal)} />
+                </div>
+              </td>
+            </tr>
+          })) ||
+            (<tr>
+              <td colSpan={7} className="text-center py-5">ไม่มีข้อมูล</td>
+            </tr>)}
+        </tbody>
+      </Table>
+    </div>
+  </Fragment>
+
+const HerbalForm = ({ data: { herbalName, scientificName, nativeName, description, showPublic }, selectedImageSrc, onChange, handleShowPublicChange, handleShowGallery, handleShowUpload }) => <Form>
   <Form.Group as={Row}>
     <Form.Label column sm="2">ชื่อสมุนไพร</Form.Label>
     <Col sm="10">
@@ -201,7 +301,14 @@ const HerbalForm = ({ herbalName, scientificName, description, showPublic, selec
   </Form.Group>
 
   <Form.Group as={Row}>
-    <Form.Label column sm="2">รายละเอียด</Form.Label>
+    <Form.Label column sm="2">ชื่อท้องถิ่น</Form.Label>
+    <Col sm="10">
+      <Form.Control type="text" placeholder="ชื่อท้องถิ่น" name="nativeName" value={nativeName} onChange={onChange} />
+    </Col>
+  </Form.Group>
+
+  <Form.Group as={Row}>
+    <Form.Label column sm="2">สรรพคุณ</Form.Label>
     <Col sm="10">
       <Form.Control as="textarea" rows="3" name="description" value={description} onChange={onChange} />
     </Col>

@@ -1,4 +1,7 @@
 import React, { Component } from 'react'
+import { connect } from 'react-redux';
+import { compose } from 'recompose';
+import { withFirebase } from 'react-redux-firebase'
 
 import { Spinner, Container, Row, Col, Button, Dropdown } from "react-bootstrap"
 import MediaItem from "./MediaItem"
@@ -67,11 +70,10 @@ const showItems = [
 
 export class MainList extends Component {
   state = {
-    loading: true,
-    isAdmin: true,
     diseaseModal: false,
     herbalModal: false,
-    recipeModal: true,
+    recipeModal: false,
+    loading: true,
     showBy: "โรค",
     linkPrefix: "ตำรับ",
     data: dataList
@@ -162,18 +164,18 @@ export class MainList extends Component {
 
   render() {
 
-    const { loading, isAdmin, diseaseModal, herbalModal, recipeModal, showBy, linkPrefix, data } = this.state
+    const { loading, diseaseModal, herbalModal, recipeModal, showBy, linkPrefix, data } = this.state
     return (
       <Container>
-        {isAdmin ? <Row className="justify-content-md-center">
-          <Col xs lg={2}>
-            <Button variant="outline-primary" block onClick={this.handleAddDisease}>เพิ่มโรค</Button>
+        {this.props.authUser ? <Row className="justify-content-md-center mb-3">
+          <Col xs lg={3}>
+            <Button variant="outline-primary" block onClick={this.handleAddDisease}>จัดการข้อมูลโรค</Button>
           </Col>
-          <Col xs lg={2}>
-            <Button variant="outline-primary" block onClick={this.handleAddHerbal}>เพิ่มสมุนไพร</Button>
+          <Col xs lg={3}>
+            <Button variant="outline-primary" block onClick={this.handleAddHerbal}>จัดการข้อมูลสมุนไพร</Button>
           </Col>
-          <Col xs lg={2}>
-            <Button variant="outline-primary" block onClick={this.handleAddRecipe}>เพิ่มตำรับ</Button>
+          <Col xs lg={3}>
+            <Button variant="outline-primary" block onClick={this.handleAddRecipe}>จัดการข้อมูลตำรับ</Button>
           </Col>
         </Row> : null}
         <div className="filter-item">
@@ -207,7 +209,7 @@ export class MainList extends Component {
               </Spinner> :
                 <ul className="list-unstyled">
                   {data.map((item, i) => {
-                    if (!item.hidden || isAdmin) {
+                    if (!item.hidden || (this.props.authUser !== null)) {
                       return <MediaItem
                         key={`media-${i}`}
                         uid={`media-${i}`}
@@ -217,7 +219,7 @@ export class MainList extends Component {
                         data={item.data}
                         path={item.path}
                         image={item.image}
-                        showTool={isAdmin}
+                        showTool={(this.props.authUser !== null)}
                         hidden={item.hidden}
                         onAddRecipeOrDiseaseClick={this.handleAddRecipeOrDisease}
                         onEditClick={this.handleEdit}
@@ -253,4 +255,19 @@ export class MainList extends Component {
   }
 }
 
-export default MainList
+const mapStateToProps = state => ({
+  show: state.login.show,
+  authUser: state.login.authUser
+});
+
+const mapDispatchToProps = dispatch => ({
+  showLogin: () =>
+    dispatch({ type: 'SHOW_LOGIN' }),
+  hideLogin: () =>
+    dispatch({ type: 'HIDE_LOGIN' }),
+});
+
+export default compose(
+  withFirebase,
+  connect(mapStateToProps, mapDispatchToProps),
+)(MainList)

@@ -1,213 +1,241 @@
-import React, { Component } from 'react'
-import { MyModal } from "./MyModal"
-import { Form, Col, Row, Button, Image } from 'react-bootstrap'
+import React, { Component, Fragment } from 'react'
 import { compose } from 'redux'
+import { connect } from 'react-redux';
 import { withFirestore } from 'react-redux-firebase'
-
 import { storageConfig } from "../../config"
+import { getDownloadUrl } from "../../utils"
+import * as Holder from "holderjs"
+
+import "./diseaseTable.css"
+
+import { FaPlus } from 'react-icons/fa'
+import { MyModal } from "./MyModal"
+import { Form, Col, Row, Button, Image, Table } from 'react-bootstrap'
+import { ToolButtons } from "./ToolButtons"
 
 import Gallery from "./Gallery"
 import Upload from "./Upload"
 
-import "./tagInput.css"
-
-import * as Holder from "holderjs"
-
-// const KeyCodes = {
-//   // comma: 188,
-//   enter: 13,
-// };
-
-// const delimiters = [KeyCodes.comma, KeyCodes.enter];
-
-// const suggestions = [
-//   {
-//     id: "ตำรับไม่มีชื่อ",
-//     text: "ตำรับไม่มีชื่อ"
-//   },
-//   {
-//     id: "ควยต้า",
-//     text: "ควยต้า"
-//   }
-// ]
+const images_path = storageConfig.disease_images_path
 
 class DiseaseModal extends Component {
   state = {
-    // tags: [],
+    data: {
+      diseaseName: "",
+      description: "",
+      showPublic: true,
+      image: "",
+    },
+    showAdd: false,
     showGallery: false,
-    showPublic: true,
     showUpload: false,
     selectedImageSrc: "",
-    selectedImageName: "",
-    diseaseName: "",
-    description: "",
     galleryImages: [],
     fetchGalleryImage: true,
-    updating: false
+    updating: false,
+    diseases: [],
+    /** @type {firebase.firestore.DocumentSnapshot} */
+    updateDocSnapshot: null
   }
 
   componentDidMount() {
-    Holder.run({
-      images: ".image-preview"
-    })
+    Holder.run({ images: ".image-preview" })
+    /** @type {firebase.firestore.Firestore} */
+    const firestore = this.props.firestore
     // console.log(this.props)
-  }
-  componentDidUpdate() {
-    Holder.run({
-      images: ".image-preview"
+    firestore.collection('diseases').orderBy('createdAt').onSnapshot(({ docs: diseases }) => {
+      this.setState({ diseases })
     })
   }
 
-
-
-  // handleAddition = (tag) => {
-  //   this.setState(state => ({ tags: [...state.tags, tag] }))
-  // }
-
-  // handleDelete = (i) => {
-  //   const { tags } = this.state;
-  //   this.setState({
-  //     tags: tags.filter((tag, index) => index !== i),
-  //   });
-  // }
-
-  // handleDrag(tag, currPos, newPos) {
-  //   const tags = [...this.state.tags]
-  //   const newTags = tags.slice();
-
-  //   newTags.splice(currPos, 1)
-  //   newTags.splice(newPos, 0, tag)
-
-  //   // re-render
-  //   this.setState({ tags: newTags })
-  // }
-
-  // handleTagClick = (index) => {
-  //   console.log('The tag at index ' + index + ' was clicked')
-  // }
+  componentDidUpdate() {
+    Holder.run({ images: ".image-preview" })
+  }
 
   handleChange = (e) => {
-    this.setState({
-      [e.target.name]: e.target.value
-    })
+    this.setState({ data: { ...this.state.data, [e.target.name]: e.target.value } })
   }
 
   handleShowPublicChange = (e) => {
-    this.setState({
-      showPublic: e.target.value === "true"
-    })
+    this.setState({ data: { ...this.state.data, showPublic: e.target.value === "true" } })
   }
-
 
   handleShowGallery = () => {
-    this.setState({
-      showGallery: true
-    })
+    this.setState({ showAdd: false, showGallery: true })
   }
+
   handleHideGallery = () => {
-    this.setState({
-      showGallery: false
-    })
+    this.setState({ showAdd: true, showGallery: false })
   }
 
   handleShowUpload = () => {
-    this.setState({
-      showUpload: true
-    })
+    this.setState({ showAdd: false, showUpload: true })
   }
 
   handleHideUpload = () => {
-    this.setState({
-      showUpload: false
-    })
+    this.setState({ showAdd: true, showUpload: false })
   }
 
   handleUploadDone = (url, name) => {
     this.setState({
+      showAdd: true,
       showUpload: false,
       selectedImageSrc: url,
-      selectedImageName: name,
+      data: {
+        ...this.state.data,
+        image: name
+      },
       galleryImages: [...this.state.galleryImages, { url: url, name: name }]
     })
   }
 
-  handleGalleryFetchDone = (images) => {
-    this.setState({
-      galleryImages: images,
-      fetchGalleryImage: false
-    })
+  handleGalleryFetchDone = images => {
+    this.setState({ galleryImages: images, fetchGalleryImage: false })
   }
 
   handleImageClick = (e) => {
     const imageName = e.target.getAttribute("data-img-name")
     this.setState({
+      showAdd: true,
       showGallery: false,
       selectedImageSrc: e.target.src,
-      selectedImageName: imageName
+      data: {
+        ...this.state.data,
+        image: imageName
+      }
     })
-    // console.log("Selected", imageName)
   }
 
   handleSubmit = () => {
+    /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
-    const { diseaseName, description, selectedImageName, showPublic } = this.state
+    /** @type {firebase.User} */
+    const user = this.props.authUser
+    if (!user) {
+      console.warn("Auth required!")
+      this.props.showLogin()
+      return
+    }
+    const { data, updateDocSnapshot } = this.state
+    this.setState({ updating: true })
 
-    this.setState({
-      updating: true
-    })
-
-    firestore.set({ collection: 'diseases', doc: diseaseName }, {
-      description: description,
-      image: selectedImageName,
-      showPublic: showPublic,
-      owner: 'Anonymous',
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      // modifyAt: firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-      this.setState({
-        updating: false,
+    if (updateDocSnapshot) {
+      updateDocSnapshot.ref.update({
+        ...data,
+        owner: user.uid,
+        modifyAt: firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        this.setState({ showAdd: false, updating: false, })
       })
-      this.props.onHide()
-      // console.log("Success")
+      return
+    }
+
+    firestore.collection('diseases').add({
+      ...data,
+      owner: user.uid,
+      createdAt: firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      this.setState({ showAdd: false, updating: false, })
+    })
+  }
+
+  handleShowAdd = () => {
+    this.setState({
+      showAdd: true,
+      data: {
+        diseaseName: "",
+        description: "",
+        showPublic: true,
+        image: "",
+      },
+      selectedImageSrc: "",
+      updateDocSnapshot: null,
+    })
+  }
+
+  handleHideAdd = () => { this.setState({ showAdd: false }) }
+
+  /**
+   * @param {firebase.firestore.DocumentSnapshot} snapshot
+   */
+  handleEdit = snapshot => {
+    const data = snapshot.data()
+    this.setState({
+      data,
+      selectedImageSrc: getDownloadUrl(images_path, data.image),
+      showAdd: true,
+      updateDocSnapshot: snapshot
+    })
+  }
+
+  /**
+   * @param {firebase.firestore.DocumentSnapshot} snapshot
+   */
+  handleDelete = snapshot => {
+    if (!snapshot) return
+
+    /** @type {firebase.User} */
+    const user = this.props.authUser
+    if (!user) {
+      console.warn("Auth required!")
+      this.props.showLogin()
+      return
+    }
+
+    snapshot.ref.delete().then(() => {
+      console.log("deleted")
+    }).catch(err => {
+      console.log("deleted fail:", err)
     })
   }
 
   render() {
-    const { diseaseName, description, tags, showGallery, showUpload, galleryImages, fetchGalleryImage, selectedImageSrc, updating } = this.state
+    const { data, diseases, showAdd, showGallery, showUpload, galleryImages, fetchGalleryImage, selectedImageSrc, updating, updateDocSnapshot } = this.state
     const { onHide } = this.props
-    let modalBody = <DiseaseForm tags={tags}
-      diseaseName={diseaseName}
-      description={description}
-      onChange={this.handleChange}
-      selectedImageSrc={selectedImageSrc}
-      // handleDelete={this.handleDelete}
-      // handleAddition={this.handleAddition}
-      // handleTagClick={this.handleTagClick}
-      handleShowGallery={this.handleShowGallery}
-      handleShowUpload={this.handleShowUpload}
-      handleShowPublicChange={this.handleShowPublicChange}
-    />
-    const modalTitle = "เพิ่มโรค"
+
+    let modalTitle = "จัดการข้อมูลโรค"
     let modalSubTitle = ""
     let submittext = "บันทึก"
-    let showsubmit = "true"
+    let showsubmit = "false"
     let canceltext = "ปิด"
     let onCancel = onHide
     let submitdisable = updating.toString()
 
-    if (showUpload) {
-      modalSubTitle = " > อัพโหลดภาพ"
+    let modalBody = <DiseaseList
+      diseases={diseases}
+      handleAdd={this.handleShowAdd}
+      handleEdit={this.handleEdit}
+      handleDelete={this.handleDelete}
+    />
+    const subtitle = updateDocSnapshot ? "แก้ไขข้อมูลโรค" : "เพิ่มข้อมูลโรค"
+    if (showAdd) {
+      modalSubTitle = subtitle
+      submittext = "บันทึก"
+      showsubmit = "true"
+      canceltext = "กลับ"
+      onCancel = this.handleHideAdd
+
+      modalBody = <DiseaseForm
+        data={data}
+        selectedImageSrc={selectedImageSrc}
+        onChange={this.handleChange}
+        handleShowGallery={this.handleShowGallery}
+        handleShowUpload={this.handleShowUpload}
+        handleShowPublicChange={this.handleShowPublicChange}
+      />
+    } else if (showUpload) {
+      modalSubTitle = subtitle + " > อัพโหลดภาพ"
       submittext = "เสร็จสิ้น"
       showsubmit = "false"
       canceltext = "กลับ"
       onCancel = this.handleHideUpload
-      modalBody = <Upload onUploadDone={this.handleUploadDone} uploadPath={storageConfig.disease_images_path} />
+      modalBody = <Upload onUploadDone={this.handleUploadDone} uploadPath={images_path} />
       submitdisable = "false"
 
     } else if (showGallery) {
-      modalSubTitle = " > เลือกภาพ"
+      modalSubTitle = subtitle + " > เลือกภาพ"
       onCancel = this.handleHideGallery
-      submittext = "เลือกภาพ"
+      submittext = "เลือกภาพจากคลัง"
       showsubmit = "false"
       canceltext = "กลับ"
       modalBody =
@@ -222,7 +250,7 @@ class DiseaseModal extends Component {
     return <MyModal
       show={this.props.show}
       body={modalBody}
-      title={modalTitle + modalSubTitle}
+      title={modalTitle + (modalSubTitle ? " > " + modalSubTitle : "")}
       submittext={submittext}
       showsubmit={showsubmit}
       canceltext={canceltext}
@@ -234,7 +262,48 @@ class DiseaseModal extends Component {
   }
 }
 
-const DiseaseForm = ({ diseaseName, description, showPublic, selectedImageSrc, onChange, tags, handleDelete, handleAddition, handleTagClick, handleShowGallery, handleShowUpload, handleShowPublicChange }) => <Form>
+const DiseaseList = ({ diseases, handleAdd, handleEdit, handleDelete }) =>
+  <Fragment>
+    <div className="mb-1 text-right">
+      <Button variant="success" onClick={handleAdd}><FaPlus /></Button>
+    </div>
+    <div style={{ height: "40rem", overflowY: "auto" }}>
+      <Table bordered striped size="sm" responsive hover >
+        <thead>
+          <tr>
+            <th style={{ width: "5%" }}>#</th>
+            <th style={{ width: "20%" }}>ชื่อโรค</th>
+            <th style={{ width: "55%" }}>รายละเอียด</th>
+            <th style={{ width: "10%" }}>สาธารณะ</th>
+            <th style={{ width: "10%" }}>เครื่องมือ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {(diseases && diseases.length > 0 && diseases.map((disease, index) => {
+            const data = disease.data()
+            return <tr key={`disease-${index}`}>
+              <td className="text-center">{index + 1}</td>
+              <td>{data.diseaseName}</td>
+              <td>{data.description}</td>
+              <td>{data.showPublic ? "แสดง" : "ไม่แสดง"}</td>
+              <td >
+                <div style={{ alignSelf: "center" }} className="text-center">
+                  <ToolButtons onDelete={() => handleDelete(disease)} onEdit={() => handleEdit(disease)} />
+                </div>
+              </td>
+            </tr>
+          })) ||
+            (<tr>
+              <td colSpan={4} className="text-center py-5">ไม่มีข้อมูล</td>
+            </tr>)}
+        </tbody>
+      </Table>
+    </div>
+  </Fragment>
+
+
+
+const DiseaseForm = ({ data: { diseaseName, description, showPublic }, selectedImageSrc, onChange, handleShowGallery, handleShowUpload, handleShowPublicChange }) => <Form>
   <Form.Group as={Row}>
     <Form.Label column sm="2">ชื่อโรค</Form.Label>
     <Col sm="10">
@@ -259,25 +328,6 @@ const DiseaseForm = ({ diseaseName, description, showPublic, selectedImageSrc, o
     </Col>
   </Form.Group>
 
-
-  {/* <Form.Group as={Row}>
-    <Form.Label column sm="2">ตำรับ</Form.Label>
-    <Col sm="10">
-      <ReactTags
-        placeholder="ตำรับ"
-        tags={tags}
-        suggestions={suggestions}
-        delimiters={delimiters}
-        handleDelete={handleDelete}
-        handleAddition={handleAddition}
-        handleTagClick={handleTagClick}
-        allowDragDrop={false}
-        allowUnique={true}
-        allowDeleteFromEmptyInput={false}
-      />
-    </Col>
-  </Form.Group> */}
-
   <Form.Group as={Row}>
     <Form.Label column sm="2">รูปภาพ</Form.Label>
     <Col md={3}>
@@ -293,8 +343,22 @@ const DiseaseForm = ({ diseaseName, description, showPublic, selectedImageSrc, o
   </Form.Group>
 </Form>
 
+const mapStateToProps = state => ({
+  authUser: state.login.authUser,
+});
+
+const mapDispatchToProps = dispatch => ({
+  showLogin: () =>
+    dispatch({ type: 'SHOW_LOGIN' }),
+  hideLogin: () =>
+    dispatch({ type: 'HIDE_LOGIN' }),
+  setAuthUser: authUser =>
+    dispatch({ type: 'SET_AUTH_USER', authUser }),
+});
+
 const enhance = compose(
   withFirestore,
+  connect(mapStateToProps, mapDispatchToProps)
 )
 
 export default enhance(DiseaseModal)
