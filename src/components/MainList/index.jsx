@@ -268,7 +268,7 @@ export class MainList extends Component {
                         content={item.description}
                         data={item.recipes}
                         path={k}
-                        image={item.image ? getDownloadUrl(images_path, item.image) : "holder.js/200x200"}
+                        image={item.image ? getDownloadUrl(images_path, item.image) : "holder.js/255x255"}
                         showTool={(this.props.authUser !== null)}
                         hidden={!item.showPublic}
                         onAddRecipeOrDiseaseClick={this.handleAddRecipeOrDisease}
