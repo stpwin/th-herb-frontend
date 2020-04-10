@@ -279,7 +279,7 @@ const HerbalList = ({ herbals, handleAdd, handleEdit, handleDelete }) =>
               <td>{data.herbalName}</td>
               <td>{data.scientificName}</td>
               <td>{data.nativeName}</td>
-              <td>{data.description}</td>
+              <td><p className="td-fixed-content">{data.description}</p></td>
               <td>{data.showPublic ? "แสดง" : "ไม่แสดง"}</td>
               <td >
                 <div style={{ alignSelf: "center" }} className="text-center">
@@ -321,7 +321,7 @@ const HerbalForm = ({ data: { herbalName, scientificName, nativeName, descriptio
   <Form.Group as={Row}>
     <Form.Label column sm="2">สรรพคุณ</Form.Label>
     <Col sm="10">
-      <Form.Control as="textarea" rows="3" name="description" value={description} onChange={onChange} />
+      <Form.Control as="textarea" rows="8" name="description" value={description} onChange={onChange} />
     </Col>
   </Form.Group>
 

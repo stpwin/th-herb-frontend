@@ -86,7 +86,7 @@ class RecipeModal extends Component {
 
         const herbalDocs = herbalRefs && herbalRefs.map(herbal => herbal.get())
         herbalDocs && Promise.all(herbalDocs).then(result => {
-          const herbalNames = result.map(s => (s.exists && s.data().herbalName || "ข้อมูลถูกลบ"))
+          const herbalNames = result.map(s => (s.exists && s.data().herbalName) || "ข้อมูลถูกลบ")
           const updateData = { [snapshot.id]: { ...this.state.recipes[snapshot.id], herbalNames } }
           this.setState({
             recipes: { ...this.state.recipes, ...updateData }
@@ -302,7 +302,7 @@ const RecipeList = ({ recipes, handleAdd, handleEdit, handleDelete }) =>
           {(recipes && Object.values(recipes).length > 0 && Object.values(recipes).map((recipe, index) => {
             // const r = Object.values(recipe)[0]
             const data = recipe.snapshot.data()
-            console.log("recipe", recipe)
+            // console.log("recipe", recipe)
             return <tr key={`recipe-${index}`}>
               <td className="text-center">{index + 1}</td>
               <td>{data.recipeName}</td>
@@ -373,7 +373,7 @@ const RecipeForm = ({ data: { recipeName, description, showPublic, heal }, selec
     <Form.Group as={Row}>
       <Form.Label column sm="2">ขั้นตอนการรักษา</Form.Label>
       <Col sm="10">
-        <Form.Control as="textarea" rows="10" name="description" value={description} onChange={onChange} />
+        <Form.Control as="textarea" rows="14" name="description" value={description} onChange={onChange} />
       </Col>
     </Form.Group>
 

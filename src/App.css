@@ -73,3 +73,11 @@
 .jumbotron {
   /* background-color: #0DFFC2!important; */
 }
+
+.td-fixed-content {
+  /* max-height: 225px; */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}

@@ -51,13 +51,14 @@ export default class MediaItem extends Component {
             </Dropdown>
           </div>
           <p className="item-content">
-            {this.props.content}
+            {`${this.props.content}`}
           </p>
           <div>
-            {(this.props.data && this.props.data.map((item, index) => {
+            {(this.props.data && Object.entries(this.props.data).length > 0 && Object.entries(this.props.data).map(([k, v], index) => {
+              const name = v.recipeName
               return (
-                <a key={`${this.props.uid}-${index}`} href={`#${this.props.path}/${item.path}`}>
-                  <Badge variant="success" className="mr-2 custom-badge">{this.props.prefix} {index + 1} {item.name}</Badge>
+                <a key={`${this.props.uid}-${index}`} href={`#${this.props.path}/${k}`}>
+                  <Badge variant="success" className="mr-2 custom-badge">{this.props.prefix} {index + 1} {name}</Badge>
                 </a>
               )
             })) || <span className="mr-1">ไม่พบข้อมูล{this.props.prefix}</span>}

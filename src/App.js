@@ -25,7 +25,7 @@ const store = configureStore(initialState)
 const fbInstance = initFirebase()
 
 fbInstance.auth().onAuthStateChanged(authUser => {
-  console.log("onAuthStateChanged", authUser)
+  // console.log("onAuthStateChanged", authUser)
   if (authUser) {
 
     store.dispatch({ type: 'SET_AUTH_USER', authUser })

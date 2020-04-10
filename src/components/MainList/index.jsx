@@ -1,7 +1,9 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
-import { withFirebase } from 'react-redux-firebase'
+import { withFirebase, withFirestore } from 'react-redux-firebase'
+import { getDownloadUrl } from "../../utils"
+import { storageConfig } from "../../config"
 
 import { Spinner, Container, Row, Col, Button, Dropdown } from "react-bootstrap"
 import MediaItem from "./MediaItem"
@@ -68,6 +70,7 @@ const showItems = [
   { name: "สมุนไพร", ref: "รักษา" }
 ]
 
+let images_path = storageConfig.disease_images_path
 export class MainList extends Component {
   state = {
     diseaseModal: false,
@@ -76,10 +79,36 @@ export class MainList extends Component {
     loading: true,
     showBy: "โรค",
     linkPrefix: "ตำรับ",
-    data: dataList
+    data: dataList,
+    diseasesData: {}
   }
 
   componentDidMount() {
+    /**@type {firebase.firestore.Firestore} */
+    const firestore = this.props.firestore
+    firestore.collection('recipes').orderBy('createdAt').onSnapshot(docsSnapshot => {
+      let diseasesData = {}
+      if (docsSnapshot.empty) return
+      docsSnapshot.forEach(docSnapshot => {
+        const recipeData = docSnapshot.data()
+
+        /**@type {firebase.firestore.DocumentReference} */
+        const diseaseRef = recipeData.diseaseRef
+        //getting diseaseRef
+        diseaseRef.get().then(diseaseDoc => {
+          const diseaseData = diseaseDoc.data()
+          const recipes = { ...(diseasesData[diseaseData.diseaseName] && diseasesData[diseaseData.diseaseName].recipes), [docSnapshot.id]: { ...recipeData } }
+          diseasesData[diseaseData.diseaseName] = { ...diseaseData, recipes }
+          this.setState({
+            diseasesData
+          })
+          // console.log(diseasesData)
+        })
+        // console.log(recipeName)
+      })
+
+    })
+
     if (this.state.loading) {
       setTimeout(() => this.setState({ loading: false }), 1000)
     }
@@ -111,21 +140,21 @@ export class MainList extends Component {
   // }
 
   handleAddDisease = () => {
-    console.log("handleAddDisease")
+    // console.log("handleAddDisease")
     this.setState({
       diseaseModal: true
     })
   }
 
   handleAddHerbal = () => {
-    console.log("handleAddHerbal")
+    // console.log("handleAddHerbal")
     this.setState({
       herbalModal: true
     })
   }
 
   handleAddRecipe = () => {
-    console.log("handleAddHerbal")
+    // console.log("handleAddHerbal")
     this.setState({
       recipeModal: true
     })
@@ -147,7 +176,7 @@ export class MainList extends Component {
     if (this.state.showBy === "สมุนไพร") {
       return this.handleAddDisease()
     }
-    console.log("handleAddRecipe")
+    // console.log("handleAddRecipe")
   }
 
   handleShowBySelect = (eventKey) => {
@@ -158,13 +187,20 @@ export class MainList extends Component {
         linkPrefix: showItems[eventKey].ref,
         data: showItems[eventKey].name === "โรค" ? dataList : herbList
       })
+      images_path = showItems[eventKey].name === "โรค" ? storageConfig.disease_images_path : storageConfig.herbal_images_path
     }
     // console.log(eventKey)
   }
 
   render() {
 
-    const { loading, diseaseModal, herbalModal, recipeModal, showBy, linkPrefix, data } = this.state
+    const { loading, diseaseModal, herbalModal, recipeModal, showBy, linkPrefix, data, diseasesData } = this.state
+    // for (const [key, value] of Object.entries(diseasesData)) {
+    //   console.log(value)
+    // }
+    Object.entries(diseasesData).map(([k, v], i) => {
+      console.log(v)
+    })
     return (
       <Container>
         {this.props.authUser ? <Row className="justify-content-md-center mb-3">
@@ -208,19 +244,21 @@ export class MainList extends Component {
                 <span className="sr-only">Loading...</span>
               </Spinner> :
                 <ul className="list-unstyled">
-                  {data.map((item, i) => {
-                    if (!item.hidden || (this.props.authUser !== null)) {
+                  {/* {data.map((item, i) => { */}
+                  {Object.entries(diseasesData).map(([k, item], i) => {
+                    // const item = 
+                    if (item.showPublic || (this.props.authUser !== null)) {
                       return <MediaItem
                         key={`media-${i}`}
                         uid={`media-${i}`}
                         prefix={linkPrefix}
-                        title={item.name}
-                        content={item.content}
-                        data={item.data}
-                        path={item.path}
-                        image={item.image}
+                        title={item.diseaseName || item.herbalName}
+                        content={item.description}
+                        data={item.recipes}
+                        path={k}
+                        image={getDownloadUrl(images_path, item.image)}
                         showTool={(this.props.authUser !== null)}
-                        hidden={item.hidden}
+                        hidden={!item.showPublic}
                         onAddRecipeOrDiseaseClick={this.handleAddRecipeOrDisease}
                         onEditClick={this.handleEdit}
                         onDeleteClick={this.handleDelete}
@@ -269,5 +307,6 @@ const mapDispatchToProps = dispatch => ({
 
 export default compose(
   withFirebase,
+  withFirestore,
   connect(mapStateToProps, mapDispatchToProps),
 )(MainList)

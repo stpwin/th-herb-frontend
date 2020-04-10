@@ -284,7 +284,7 @@ const DiseaseList = ({ diseases, handleAdd, handleEdit, handleDelete }) =>
             return <tr key={`disease-${index}`}>
               <td className="text-center">{index + 1}</td>
               <td>{data.diseaseName}</td>
-              <td>{data.description}</td>
+              <td><p className="td-fixed-content">{data.description}</p></td>
               <td>{data.showPublic ? "แสดง" : "ไม่แสดง"}</td>
               <td >
                 <div style={{ alignSelf: "center" }} className="text-center">
@@ -314,7 +314,7 @@ const DiseaseForm = ({ data: { diseaseName, description, showPublic }, selectedI
   <Form.Group as={Row}>
     <Form.Label column sm="2">รายละเอียด</Form.Label>
     <Col sm="10">
-      <Form.Control as="textarea" rows="3" name="description" value={description} onChange={onChange} />
+      <Form.Control as="textarea" rows="14" name="description" value={description} onChange={onChange} />
     </Col>
   </Form.Group>
 
