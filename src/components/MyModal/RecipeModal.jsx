@@ -1,6 +1,8 @@
 import React, { Component, Fragment } from 'react'
 import { compose } from 'redux'
+import { connect } from 'react-redux';
 import { withFirestore } from 'react-redux-firebase'
+import { hydrate } from "../../utils"
 
 import { MyModal } from "./MyModal"
 import { Form, Col, Row, Button, Table } from 'react-bootstrap'
@@ -35,15 +37,18 @@ class RecipeModal extends Component {
     diseases: [],
     herbals: [],
     /** @type {firebase.firestore.DocumentReference[]} */
-    recipes: [],
+    recipes: {},
     updating: false,
     selectHerbals: [],
+    selectDisease: "",
     data: {
       recipeName: "",
       heal: "",
       description: "",
+      /** @type {firebase.firestore.DocumentReference} */
       diseaseRef: null,
       showPublic: true,
+      /** @type {firebase.firestore.DocumentReference[]} */
       herbalRefs: []
     },
     /** @type {firebase.firestore.DocumentSnapshot} */
@@ -67,8 +72,27 @@ class RecipeModal extends Component {
       })
       this.setState({ herbals })
     })
-    firestore.collection('recipes').orderBy('createdAt').onSnapshot(({ docs: recipes }) => {
-      this.setState({ recipes })
+    firestore.collection('recipes').orderBy('createdAt').onSnapshot(({ docs }) => {
+
+      docs.forEach(async (snapshot) => {
+        const data = snapshot.data()
+        /** @type {firebase.firestore.DocumentReference[]} */
+        const herbalRefs = data.herbalRefs
+        await hydrate(data, ['diseaseRef'])
+
+        this.setState({
+          recipes: { ...this.state.recipes, [snapshot.id]: { snapshot, diseaseName: data.diseaseRef && data.diseaseRef.diseaseName } }
+        })
+
+        const herbalDocs = herbalRefs && herbalRefs.map(herbal => herbal.get())
+        herbalDocs && Promise.all(herbalDocs).then(result => {
+          const herbalNames = result.map(s => (s.exists && s.data().herbalName || "ข้อมูลถูกลบ"))
+          const updateData = { [snapshot.id]: { ...this.state.recipes[snapshot.id], herbalNames } }
+          this.setState({
+            recipes: { ...this.state.recipes, ...updateData }
+          })
+        })
+      })
     })
   }
 
@@ -86,14 +110,14 @@ class RecipeModal extends Component {
 
   handleDiseaseChange = (e) => {
     const diseaseRef = e && e.ref
-    this.setState({ data: { ...this.state.data, diseaseRef } })
+    this.setState({ data: { ...this.state.data, diseaseRef }, selectDisease: e && e.value })
   }
 
   handleSelectHerbalChange = e => {
-    const herbalRefs = e && e.map(item => {
-      return item.ref
-    })
-    this.setState({ selectHerbals: e, data: { ...this.state.data, herbalRefs } })
+    const herbalRefs = e && e.map(item => item.ref)
+    const selectHerbals = e && e.map(item => item.value)
+    console.log("handleSelectHerbalChange:", e)
+    this.setState({ selectHerbals, data: { ...this.state.data, herbalRefs } }, () => console.log(this.state.selectHerbals))
   }
 
   handleHealChange = e => {
@@ -106,12 +130,20 @@ class RecipeModal extends Component {
     const firestore = this.props.firestore
     const { data, updateDocSnapshot } = this.state
 
+    /** @type {firebase.User} */
+    const user = this.props.authUser
+    if (!user) {
+      console.warn("Auth required!")
+      this.props.showLogin()
+      return
+    }
+
     this.setState({ updating: true })
 
     if (updateDocSnapshot) {
       updateDocSnapshot.ref.update({
         ...data,
-        owner: 'Anonymous',
+        owner: user.uid,
         modifyAt: firestore.FieldValue.serverTimestamp()
       }).then(() => {
         this.setState({ showAdd: false, updating: false, })
@@ -143,24 +175,40 @@ class RecipeModal extends Component {
       //   })
       // }
       console.log("recipe added")
-      this.setState({ updating: false, })
-      // this.props.onHide()
+      this.setState({ showAdd: false, updating: false, })
     })
   }
 
-  handleShowAdd = () => { this.setState({ showAdd: true }) }
+  handleShowAdd = () => {
+    this.setState({
+      showAdd: true,
+      data: {
+        recipeName: "",
+        heal: "",
+        description: "",
+        diseaseRef: null,
+        showPublic: true,
+        herbalRefs: []
+      },
+      updateDocSnapshot: null,
+      selectDisease: "",
+      selectHerbals: [],
+    })
+  }
 
   handleHideAdd = () => { this.setState({ showAdd: false }) }
 
   /**
 * @param {firebase.firestore.DocumentSnapshot} snapshot
 */
-  handleEdit = snapshot => {
-    const data = snapshot.data()
+  handleEdit = recipe => {
+    const data = recipe.snapshot.data()
     this.setState({
       data,
+      selectDisease: recipe.diseaseName,
+      selectHerbals: recipe.herbalNames,
+      updateDocSnapshot: recipe.snapshot,
       showAdd: true,
-      updateDocSnapshot: snapshot
     })
   }
 
@@ -177,7 +225,7 @@ class RecipeModal extends Component {
   }
 
   render() {
-    const { data, showAdd, diseases, selectHerbals, recipes, herbals, updating } = this.state
+    const { data, updateDocSnapshot, showAdd, diseases, selectDisease, selectHerbals, recipes, herbals, updating } = this.state
     const { onHide } = this.props
 
     const modalTitle = "จัดการข้อมูลตำรับ"
@@ -195,8 +243,9 @@ class RecipeModal extends Component {
       handleDelete={this.handleDelete}
     />
 
+    const subtitle = updateDocSnapshot ? "แก้ไขข้อมูลตำรับ" : "เพิ่มข้อมูลตำรับ"
     if (showAdd) {
-      modalSubTitle = "เพิ่มตำรับ"
+      modalSubTitle = subtitle
       submittext = "บันทึก"
       showsubmit = "true"
       canceltext = "กลับ"
@@ -205,8 +254,9 @@ class RecipeModal extends Component {
       modalBody = <RecipeForm
         data={data}
         herbals={herbals}
-        selectHerbals={selectHerbals}
         diseases={diseases}
+        selectDisease={selectDisease}
+        selectHerbals={selectHerbals}
         onChange={this.handleChange}
         handleShowPublicChange={this.handleShowPublicChange}
         handleDiseaseChange={this.handleDiseaseChange}
@@ -243,29 +293,26 @@ const RecipeList = ({ recipes, handleAdd, handleEdit, handleDelete }) =>
             <th>ชื่อตำรับ</th>
             <th>รักษาโรค</th>
             <th>วิธีการ</th>
-            {/* <th>สมุนไพร</th> */}
+            <th>สมุนไพร</th>
             <th style={{ width: "10%" }}>สาธารณะ</th>
             <th style={{ width: "10%" }}>เครื่องมือ</th>
           </tr>
         </thead>
         <tbody>
-          {(recipes && recipes.length > 0 && recipes.map((recipe, index) => {
-            const data = recipe.data()
-            /** @type {firebase.firestore.DocumentReference} */
-            const diseaseRef = data.diseaseRef
-            diseaseRef.get().then(snapshot => {
-              console.log(snapshot.data())
-            })
+          {(recipes && Object.values(recipes).length > 0 && Object.values(recipes).map((recipe, index) => {
+            // const r = Object.values(recipe)[0]
+            const data = recipe.snapshot.data()
+            console.log("recipe", recipe)
             return <tr key={`recipe-${index}`}>
               <td className="text-center">{index + 1}</td>
               <td>{data.recipeName}</td>
-              <td>{"diseaseName"}</td>
+              <td>{recipe.diseaseName}</td>
               <td>{data.heal}</td>
-              {/* <td>{data.description}</td> */}
+              <td>{recipe.herbalNames && recipe.herbalNames.join(", ")}</td>
               <td>{data.showPublic ? "แสดง" : "ไม่แสดง"}</td>
               <td >
                 <div style={{ alignSelf: "center" }} className="text-center">
-                  <ToolButtons onDelete={() => handleDelete(recipe)} onEdit={() => handleEdit(recipe)} />
+                  <ToolButtons onDelete={() => handleDelete(recipe.snapshot)} onEdit={() => handleEdit(recipe)} />
                 </div>
               </td>
             </tr>
@@ -278,7 +325,8 @@ const RecipeList = ({ recipes, handleAdd, handleEdit, handleDelete }) =>
     </div>
   </Fragment>
 
-const RecipeForm = ({ data: { recipeName, description, showPublic, heal }, selectHerbals, diseases, herbals, onChange, handleShowPublicChange, handleDiseaseChange, onSelectHerbalChange, handleHealChange }) =>
+const RecipeForm = ({ data: { recipeName, description, showPublic, heal }, selectDisease, selectHerbals, diseases, herbals, onChange, handleShowPublicChange, handleDiseaseChange, onSelectHerbalChange, handleHealChange }) =>
+
   <Form autoComplete="off">
     <Form.Group as={Row}>
       <Form.Label column sm="2">ชื่อตำรับ</Form.Label>
@@ -297,7 +345,7 @@ const RecipeForm = ({ data: { recipeName, description, showPublic, heal }, selec
           isClearable={true}
           backspaceRemovesValue={false}
           options={diseases}
-          // defaultValue={}
+          value={diseases.filter(option => option.value === selectDisease)}
           name="diseases"
           onChange={handleDiseaseChange}
         />
@@ -315,7 +363,7 @@ const RecipeForm = ({ data: { recipeName, description, showPublic, heal }, selec
           isClearable={true}
           backspaceRemovesValue={false}
           options={healGroup}
-          defaultValue={heal}
+          value={healGroup.filter(h => h.value === heal)}
           name="heal_select"
           onChange={handleHealChange}
         />
@@ -340,7 +388,7 @@ const RecipeForm = ({ data: { recipeName, description, showPublic, heal }, selec
           isClearable={true}
           backspaceRemovesValue={false}
           options={herbals}
-          defaultValue={selectHerbals}
+          defaultValue={herbals.filter(h => selectHerbals && selectHerbals.includes(h.value))}
           name="herbals_select"
           onChange={onSelectHerbalChange}
           isMulti
@@ -360,8 +408,18 @@ const RecipeForm = ({ data: { recipeName, description, showPublic, heal }, selec
     <Form.Control type="hidden" value="something"></Form.Control>
   </Form>
 
+const mapStateToProps = state => ({
+  authUser: state.login.authUser,
+});
+
+const mapDispatchToProps = dispatch => ({
+  showLogin: () =>
+    dispatch({ type: 'SHOW_LOGIN' })
+});
+
 const enhance = compose(
   withFirestore,
+  connect(mapStateToProps, mapDispatchToProps)
 )
 
 export default enhance(RecipeModal)

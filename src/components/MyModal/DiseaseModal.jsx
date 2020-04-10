@@ -350,10 +350,6 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
   showLogin: () =>
     dispatch({ type: 'SHOW_LOGIN' }),
-  hideLogin: () =>
-    dispatch({ type: 'HIDE_LOGIN' }),
-  setAuthUser: authUser =>
-    dispatch({ type: 'SET_AUTH_USER', authUser }),
 });
 
 const enhance = compose(

@@ -1,5 +1,6 @@
 import React, { Component, Fragment } from 'react'
 import { compose } from 'redux'
+import { connect } from 'react-redux';
 import { withFirestore } from 'react-redux-firebase'
 import { storageConfig } from "../../config"
 import * as Holder from "holderjs"
@@ -103,12 +104,20 @@ class HerbalModal extends Component {
     /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
     const { data, updateDocSnapshot } = this.state
-    this.setState({ updating: true })
 
+    /** @type {firebase.User} */
+    const user = this.props.authUser
+    if (!user) {
+      console.warn("Auth required!")
+      this.props.showLogin()
+      return
+    }
+
+    this.setState({ updating: true })
     if (updateDocSnapshot) {
       updateDocSnapshot.ref.update({
         ...data,
-        owner: 'Anonymous',
+        owner: user.uid,
         modifyAt: firestore.FieldValue.serverTimestamp()
       }).then(() => {
         this.setState({ showAdd: false, updating: false, })
@@ -130,10 +139,12 @@ class HerbalModal extends Component {
     this.setState({
       showAdd: true,
       data: {
-        diseaseName: "",
+        herbalName: "",
+        scientificName: "",
+        nativeName: "",
         description: "",
-        showPublic: true,
         image: "",
+        showPublic: true,
       },
       selectedImageSrc: "",
       updateDocSnapshot: null
@@ -339,8 +350,18 @@ const HerbalForm = ({ data: { herbalName, scientificName, nativeName, descriptio
   </Form.Group>
 </Form>
 
+const mapStateToProps = state => ({
+  authUser: state.login.authUser,
+});
+
+const mapDispatchToProps = dispatch => ({
+  showLogin: () =>
+    dispatch({ type: 'SHOW_LOGIN' })
+});
+
 const enhance = compose(
   withFirestore,
+  connect(mapStateToProps, mapDispatchToProps)
 )
 
 export default enhance(HerbalModal)
