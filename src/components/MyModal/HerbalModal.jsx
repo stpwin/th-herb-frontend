@@ -278,7 +278,7 @@ const HerbalList = ({ herbals, handleAdd, handleEdit, handleDelete }) =>
               <td className="text-center">{index + 1}</td>
               <td>{data.herbalName}</td>
               <td>{data.scientificName}</td>
-              <td>{data.nativeName}</td>
+              <td><p className="td-fixed-content">{data.nativeName}</p></td>
               <td><p className="td-fixed-content">{data.description}</p></td>
               <td>{data.showPublic ? "แสดง" : "ไม่แสดง"}</td>
               <td >

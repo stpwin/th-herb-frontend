@@ -83,10 +83,10 @@ export class MainList extends Component {
     diseasesData: {}
   }
 
-  componentDidMount() {
+  fetchData = () => {
     /**@type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
-    firestore.collection('recipes').orderBy('createdAt').onSnapshot(docsSnapshot => {
+    firestore.collection('recipes').orderBy('createdAt').get().then(docsSnapshot => {
       let diseasesData = {}
       if (docsSnapshot.empty) return
       docsSnapshot.forEach(docSnapshot => {
@@ -96,22 +96,34 @@ export class MainList extends Component {
         const diseaseRef = recipeData.diseaseRef
         //getting diseaseRef
         diseaseRef.get().then(diseaseDoc => {
+          if (!diseaseDoc.exists) return
           const diseaseData = diseaseDoc.data()
           const recipes = { ...(diseasesData[diseaseData.diseaseName] && diseasesData[diseaseData.diseaseName].recipes), [docSnapshot.id]: { ...recipeData } }
           diseasesData[diseaseData.diseaseName] = { ...diseaseData, recipes }
           this.setState({
-            diseasesData
+            diseasesData,
+            loading: false
           })
-          // console.log(diseasesData)
         })
-        // console.log(recipeName)
       })
+    })
+  }
 
+  componentDidMount() {
+    /**@type {firebase.firestore.Firestore} */
+    const firestore = this.props.firestore
+
+    firestore.collection('herbals').onSnapshot(s => {
+      this.fetchData()
     })
 
-    if (this.state.loading) {
-      setTimeout(() => this.setState({ loading: false }), 1000)
-    }
+    firestore.collection('diseases').onSnapshot(s => {
+      this.fetchData()
+    })
+
+    firestore.collection('recipes').onSnapshot(docsSnapshot => {
+      this.fetchData()
+    })
   }
 
   handleHideDiseaseModal = () => {
@@ -256,7 +268,7 @@ export class MainList extends Component {
                         content={item.description}
                         data={item.recipes}
                         path={k}
-                        image={getDownloadUrl(images_path, item.image)}
+                        image={item.image ? getDownloadUrl(images_path, item.image) : "holder.js/400x400"}
                         showTool={(this.props.authUser !== null)}
                         hidden={!item.showPublic}
                         onAddRecipeOrDiseaseClick={this.handleAddRecipeOrDisease}
