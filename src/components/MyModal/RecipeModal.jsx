@@ -55,10 +55,9 @@ class RecipeModal extends Component {
     updateDocSnapshot: null,
   }
 
-  componentDidMount() {
+  fetchData = () => {
     /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
-
     const recipesRef = firestore.collection('recipes')
     const herbalsRef = firestore.collection('herbals')
     const diseasesRef = firestore.collection('diseases')
@@ -69,6 +68,8 @@ class RecipeModal extends Component {
         return { label: data.diseaseName, value: data.diseaseName, ref: doc.ref }
       })
       this.setState({ diseases })
+    }, (error) => {
+
     })
     herbalsRef.onSnapshot(({ docs }) => {
       const herbals = docs.map(doc => {
@@ -76,6 +77,8 @@ class RecipeModal extends Component {
         return { label: data.herbalName, value: data.herbalName, ref: doc.ref }
       })
       this.setState({ herbals })
+    }, (error) => {
+
     })
     recipesRef.onSnapshot(({ docs }) => {
       docs.forEach(async (snapshot) => {
@@ -97,7 +100,18 @@ class RecipeModal extends Component {
           })
         })
       })
+    }, (error) => {
+
     })
+  }
+
+  componentDidMount() {
+    /**@type {firebase.auth.Auth} */
+    const auth = this.props.firebase.auth()
+    auth.onAuthStateChanged(user => {
+      this.fetchData()
+    })
+    this.fetchData()
   }
 
   handleChange = (e) => {

@@ -29,4 +29,10 @@
 
 .custom-badge {
   line-height: 1.5 !important;
+  border-radius: 0.1rem !important;
+}
+
+.custom-button {
+  line-height: 0.7 !important;
+  border-radius: 0.1rem !important;
 }

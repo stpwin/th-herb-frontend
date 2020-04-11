@@ -31,7 +31,7 @@ export class Gallery extends PureComponent {
           }
           // console.info(url)
         }).catch(err => {
-          console.warn(err)
+          // console.warn(err)
         })
       })
       // console.info(res)

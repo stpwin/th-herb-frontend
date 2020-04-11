@@ -38,14 +38,25 @@ class DiseaseModal extends Component {
     updateDocSnapshot: null
   }
 
-  componentDidMount() {
-    Holder.run({ images: ".image-preview" })
+  fetchData = () => {
     /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
     // console.log(this.props)
     firestore.collection('diseases').orderBy('createdAt').onSnapshot(({ docs: diseases }) => {
       this.setState({ diseases })
+    }, (error) => {
+      // console.warn(error)
     })
+  }
+
+  componentDidMount() {
+    Holder.run({ images: ".image-preview" })
+    /**@type {firebase.auth.Auth} */
+    const auth = this.props.firebase.auth()
+    auth.onAuthStateChanged(user => {
+      this.fetchData()
+    })
+    this.fetchData()
   }
 
   componentDidUpdate() {

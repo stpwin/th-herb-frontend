@@ -4,6 +4,8 @@ import 'firebase/auth'
 import 'firebase/firestore' // make sure you add this for firestore
 import 'firebase/storage'
 import { firebase as fbConfig } from './config'
+import * as dotenv from 'dotenv'
+dotenv.config()
 
 /** @type {firebase} */
 let firebaseInstance
@@ -16,11 +18,11 @@ export default function initFirebase(initialState, history) {
   // Initialize firebase instance if it doesn't already exist
   if (!firebaseInstance) {
     const shouldUseEmulator = process.env.REACT_APP_USE_DB_EMULATORS
-
-    if (shouldUseEmulator) { // or window.location.hostname === 'localhost' if you want
-      console.log('Using RTDB emulator')
-      fbConfig.databaseURL = `http://localhost:9000?ns=${fbConfig.projectId}`
-    }
+    console.log(process.env.REACT_APP_USE_DB_EMULATORS)
+    // if (shouldUseEmulator) { // or window.location.hostname === 'localhost' if you want
+    //   console.log('Using RTDB emulator')
+    //   fbConfig.databaseURL = `http://localhost:9000?ns=${fbConfig.projectId}`
+    // }
 
     // Initialize Firebase instance
     firebase.initializeApp(fbConfig)
@@ -31,9 +33,10 @@ export default function initFirebase(initialState, history) {
         host: 'localhost:8080',
         ssl: false
       })
-    } else {
-      firebase.firestore()
     }
+    // else {
+    //   firebase.firestore()
+    // }
     firebaseInstance = firebase
   }
 

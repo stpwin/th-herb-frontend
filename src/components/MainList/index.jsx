@@ -34,7 +34,7 @@ export class MainList extends Component {
     let diseasesData = {}
     this.setState({ diseasesData })
     if (recipesSnap) {
-      console.log("recipesSnap", recipesSnap.empty)
+      // console.log("recipesSnap", recipesSnap.empty)
       if (recipesSnap.empty) return
       recipesSnap.forEach(recipeSnap => {
         if (recipeSnap.exists) {
@@ -55,7 +55,7 @@ export class MainList extends Component {
               })
             }
           }).catch(err => {
-            console.warn(err)
+            // console.warn(err)
           })
         }
       })
@@ -88,12 +88,12 @@ export class MainList extends Component {
             }
 
           }).catch(err => {
-            console.warn(err)
+            // console.warn(err)
           })
         }
       })
     }).catch(err => {
-      console.warn(err)
+      // console.warn(err)
     })
   }
 
@@ -109,33 +109,43 @@ export class MainList extends Component {
     const diseasesRef = firestore.collection('diseases').where('showPublic', '==', true)
 
     auth.onAuthStateChanged(authUser => {
-      if (authUser) {
 
-        recipesRef.onSnapshot(recipesSnap => {
-          this.fetchData(recipesSnap)
-        })
+      recipesRef.onSnapshot(recipesSnap => {
+        this.fetchData(recipesSnap)
+      }, (error) => {
 
-        herbalsRef.onSnapshot(s => {
-          this.fetchData()
-        })
+      })
 
-        diseasesRef.onSnapshot(s => {
-          this.fetchData()
-        })
-      }
+      herbalsRef.onSnapshot(s => {
+        this.fetchData()
+      }, (error) => {
+
+      })
+
+      diseasesRef.onSnapshot(s => {
+        this.fetchData()
+      }, (error) => {
+
+      })
     })
 
     recipesRef.onSnapshot(recipesSnap => {
       this.fetchData(recipesSnap)
+    }, (error) => {
+
     })
 
 
     herbalsRef.onSnapshot(s => {
       this.fetchData()
+    }, (error) => {
+
     })
 
     diseasesRef.onSnapshot(s => {
       this.fetchData()
+    }, (error) => {
+
     })
   }
 
@@ -219,7 +229,7 @@ export class MainList extends Component {
 
   render() {
 
-    const { loading, diseaseModal, herbalModal, recipeModal, showBy, linkPrefix, data, diseasesData } = this.state
+    const { loading, diseaseModal, herbalModal, recipeModal, showBy, linkPrefix, diseasesData } = this.state
     // for (const [key, value] of Object.entries(diseasesData)) {
     //   console.log(value)
     // }

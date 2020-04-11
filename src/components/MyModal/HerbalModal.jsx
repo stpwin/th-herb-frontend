@@ -36,16 +36,28 @@ class HerbalModal extends Component {
     }
   }
 
-  componentDidMount() {
-    Holder.run({ images: ".image-preview" })
+  fetchData = () => {
     /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
     firestore.collection('herbals').orderBy('createdAt').onSnapshot(({ docs: herbals }) => {
       this.setState({
         herbals
       })
+    }, (error) => {
+
     })
   }
+
+  componentDidMount() {
+    Holder.run({ images: ".image-preview" })
+    /**@type {firebase.auth.Auth} */
+    const auth = this.props.firebase.auth()
+    auth.onAuthStateChanged(user => {
+      this.fetchData()
+    })
+    this.fetchData()
+  }
+
   componentDidUpdate() {
     Holder.run({ images: ".image-preview" })
   }
