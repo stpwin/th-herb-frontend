@@ -122,7 +122,7 @@ class DiseaseModal extends Component {
     if (updateDocSnapshot) {
       updateDocSnapshot.ref.update({
         ...data,
-        owner: user.uid,
+        // owner: user.uid,
         modifyAt: firestore.FieldValue.serverTimestamp()
       }).then(() => {
         this.setState({ showAdd: false, updating: false, })
@@ -130,13 +130,32 @@ class DiseaseModal extends Component {
       return
     }
 
-    firestore.collection('diseases').add({
-      ...data,
-      owner: user.uid,
-      createdAt: firestore.FieldValue.serverTimestamp()
-    }).then(() => {
+    let collectionRef = firestore.collection('diseases')
+    collectionRef.where('diseaseName', '==', data.diseaseName).get().then(doc => {
+      if (!doc.empty) {
+        return Promise.reject("ชื่อซ้ำในระบบ")
+      }
+      return collectionRef.add({
+        ...data,
+        owner: user.uid,
+        createdAt: firestore.FieldValue.serverTimestamp()
+      })
+    }).then(result => {
+      console.log("disease added", result)
       this.setState({ showAdd: false, updating: false, })
+    }).catch(err => {
+      console.warn("disease added fail: ", err)
+      this.setState({ updating: false, })
     })
+
+
+    // firestore.collection('diseases').add({
+    //   ...data,
+    //   owner: user.uid,
+    //   createdAt: firestore.FieldValue.serverTimestamp()
+    // }).then(() => {
+    //   this.setState({ showAdd: false, updating: false, })
+    // })
   }
 
   handleShowAdd = () => {

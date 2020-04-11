@@ -11,60 +11,6 @@ import { DiseaseModal, HerbalModal, RecipeModal } from "../MyModal"
 
 import "./mainList.css"
 
-const dataList = [
-  {
-    name: "เบาหวาน",
-    content: "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like). It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).",
-    image: "holder.js/256x256?text=เบาหวาน",
-    data: [
-      { path: "1", name: "ชื่อตำรับ", herbs: ["ใบมะยม", "ใบเหงือกปลาหมอ", "รากและต้นไมยราบ", "ใบเตยหอม"] },
-      { path: "2", herbs: ["ใบมะยม", "ใบเหงือกปลาหมอ", "รากและต้นไมยราบ", "ใบเตยหอม"] }
-    ],
-    uid: "1",
-    path: "เบาหวาน",
-    hidden: true
-  },
-  {
-    name: "เกี่ยวกับระดู",
-    content: "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like). It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).",
-    image: "holder.js/256x256?text=เกี่ยวกับระดู",
-    data: [
-      { path: "1", herbs: ["ใบมะยม", "ใบเหงือกปลาหมอ", "รากและต้นไมยราบ", "ใบเตยหอม"] },
-      { path: "2", herbs: ["2", "3", "4", "5"] }
-    ],
-    uid: "2",
-    path: "เกี่ยวกับระดู",
-    hidden: false
-  }
-]
-
-const herbList = [
-  {
-    name: "ใบมะยม",
-    content: "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like). It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).",
-    image: "holder.js/256x256?text=ใบมะยม",
-    data: [
-      { path: "1", name: "เกี่ยวกับระดู", herbs: ["ใบมะยม", "ใบเหงือกปลาหมอ", "รากและต้นไมยราบ", "ใบเตยหอม"] },
-      { path: "2", herbs: ["เบาหวาน"] }
-    ],
-    uid: "1",
-    path: "ใบมะยม",
-    hidden: false
-  },
-  {
-    name: "ใบเหงือกปลาหมอ",
-    content: "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like). It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).",
-    image: "holder.js/256x256?text=ใบเหงือกปลาหมอ",
-    data: [
-      { path: "1", name: "เบาหวาน", herbs: ["A"] },
-      { path: "2", herbs: ["B"] }
-    ],
-    uid: "2",
-    path: "ใบเหงือกปลาหมอ",
-    hidden: false
-  }
-]
-
 const showItems = [
   { name: "โรค", ref: "ตำหรับ" },
   { name: "สมุนไพร", ref: "รักษา" }
@@ -79,49 +25,116 @@ export class MainList extends Component {
     loading: true,
     showBy: "โรค",
     linkPrefix: "ตำรับ",
-    data: dataList,
+    // data: dataList,
     diseasesData: {}
   }
 
-  fetchData = () => {
+  /**@param {firebase.firestore.QuerySnapshot} recipesSnap */
+  fetchData = (recipesSnap) => {
+    let diseasesData = {}
+    this.setState({ diseasesData })
+    if (recipesSnap) {
+      console.log("recipesSnap", recipesSnap.empty)
+      if (recipesSnap.empty) return
+      recipesSnap.forEach(recipeSnap => {
+        if (recipeSnap.exists) {
+          const recipeData = recipeSnap.data()
+          /**@type {firebase.firestore.DocumentReference} */
+          const diseaseRef = recipeData.diseaseRef
+          //getting diseaseRef
+          diseaseRef.get().then(diseaseDoc => {
+            if (diseaseDoc.exists) {
+              const diseaseData = diseaseDoc.data()
+              if (!diseaseData.showPublic) return
+              // console.log(diseaseData)
+              const recipes = { ...(diseasesData[diseaseData.diseaseName] && diseasesData[diseaseData.diseaseName].recipes), [recipeSnap.id]: { ...recipeData } }
+              diseasesData[diseaseData.diseaseName] = { ...diseaseData, recipes }
+              this.setState({
+                diseasesData,
+                loading: false
+              })
+            }
+          }).catch(err => {
+            console.warn(err)
+          })
+        }
+      })
+      return
+    }
+
     /**@type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
-    firestore.collection('recipes').orderBy('createdAt').get().then(docsSnapshot => {
-      let diseasesData = {}
-      if (docsSnapshot.empty) return
-      docsSnapshot.forEach(docSnapshot => {
-        const recipeData = docSnapshot.data()
 
-        /**@type {firebase.firestore.DocumentReference} */
-        const diseaseRef = recipeData.diseaseRef
-        //getting diseaseRef
-        diseaseRef.get().then(diseaseDoc => {
-          if (!diseaseDoc.exists) return
-          const diseaseData = diseaseDoc.data()
-          const recipes = { ...(diseasesData[diseaseData.diseaseName] && diseasesData[diseaseData.diseaseName].recipes), [docSnapshot.id]: { ...recipeData } }
-          diseasesData[diseaseData.diseaseName] = { ...diseaseData, recipes }
-          this.setState({
-            diseasesData,
-            loading: false
+    // console.log("recipesSnap")
+    firestore.collection('recipes').orderBy('createdAt').where('showPublic', '==', true).get().then(recipesSnap => {
+      if (recipesSnap.empty) return
+      recipesSnap.forEach(recipeSnap => {
+        if (recipeSnap.exists) {
+          const recipeData = recipeSnap.data()
+          /**@type {firebase.firestore.DocumentReference} */
+          const diseaseRef = recipeData.diseaseRef
+          //getting diseaseRef
+          diseaseRef.get().then(diseaseDoc => {
+            if (diseaseDoc.exists) {
+              const diseaseData = diseaseDoc.data()
+              if (!diseaseData.showPublic) return
+              // console.log(diseaseData)
+              const recipes = { ...(diseasesData[diseaseData.diseaseName] && diseasesData[diseaseData.diseaseName].recipes), [recipeSnap.id]: { ...recipeData } }
+              diseasesData[diseaseData.diseaseName] = { ...diseaseData, recipes }
+              this.setState({
+                diseasesData,
+                loading: false
+              })
+            }
+
+          }).catch(err => {
+            console.warn(err)
           })
-        })
+        }
       })
+    }).catch(err => {
+      console.warn(err)
     })
   }
 
   componentDidMount() {
+    /**@type {firebase.auth.Auth} */
+    const auth = this.props.firebase.auth()
+
     /**@type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
 
-    firestore.collection('herbals').onSnapshot(s => {
+    const recipesRef = firestore.collection('recipes').where('showPublic', '==', true)
+    const herbalsRef = firestore.collection('herbals').where('showPublic', '==', true)
+    const diseasesRef = firestore.collection('diseases').where('showPublic', '==', true)
+
+    auth.onAuthStateChanged(authUser => {
+      if (authUser) {
+
+        recipesRef.onSnapshot(recipesSnap => {
+          this.fetchData(recipesSnap)
+        })
+
+        herbalsRef.onSnapshot(s => {
+          this.fetchData()
+        })
+
+        diseasesRef.onSnapshot(s => {
+          this.fetchData()
+        })
+      }
+    })
+
+    recipesRef.onSnapshot(recipesSnap => {
+      this.fetchData(recipesSnap)
+    })
+
+
+    herbalsRef.onSnapshot(s => {
       this.fetchData()
     })
 
-    firestore.collection('diseases').onSnapshot(s => {
-      this.fetchData()
-    })
-
-    firestore.collection('recipes').onSnapshot(docsSnapshot => {
+    diseasesRef.onSnapshot(s => {
       this.fetchData()
     })
   }
@@ -197,7 +210,7 @@ export class MainList extends Component {
       this.setState({
         showBy: showItems[eventKey].name,
         linkPrefix: showItems[eventKey].ref,
-        data: showItems[eventKey].name === "โรค" ? dataList : herbList
+        // data: showItems[eventKey].name === "โรค" ? dataList : herbList
       })
       images_path = showItems[eventKey].name === "โรค" ? storageConfig.disease_images_path : storageConfig.herbal_images_path
     }
@@ -210,9 +223,9 @@ export class MainList extends Component {
     // for (const [key, value] of Object.entries(diseasesData)) {
     //   console.log(value)
     // }
-    Object.entries(diseasesData).map(([k, v], i) => {
-      console.log(v)
-    })
+    // Object.entries(diseasesData).map(([k, v], i) => {
+    //   // console.log(v)
+    // })
     return (
       <Container>
         {this.props.authUser ? <Row className="justify-content-md-center mb-3">
@@ -259,25 +272,25 @@ export class MainList extends Component {
                   {/* {data.map((item, i) => { */}
                   {Object.entries(diseasesData).map(([k, item], i) => {
                     // const item = 
-                    if (item.showPublic || (this.props.authUser !== null)) {
-                      return <MediaItem
-                        key={`media-${i}`}
-                        uid={`media-${i}`}
-                        prefix={linkPrefix}
-                        title={item.diseaseName || item.herbalName}
-                        content={item.description}
-                        data={item.recipes}
-                        path={k}
-                        image={item.image ? getDownloadUrl(images_path, item.image) : "holder.js/255x255"}
-                        showTool={(this.props.authUser !== null)}
-                        hidden={!item.showPublic}
-                        onAddRecipeOrDiseaseClick={this.handleAddRecipeOrDisease}
-                        onEditClick={this.handleEdit}
-                        onDeleteClick={this.handleDelete}
-                      // onHideClick={this.handleHide}
-                      />
-                    }
-                    return null;
+                    // if (item.showPublic || (this.props.authUser !== null)) {
+                    return <MediaItem
+                      key={`media-${i}`}
+                      uid={`media-${i}`}
+                      prefix={linkPrefix}
+                      title={item.diseaseName || item.herbalName}
+                      content={item.description}
+                      data={item.recipes}
+                      path={k}
+                      image={item.image ? getDownloadUrl(images_path, item.image) : "holder.js/255x255"}
+                      // showTool={(this.props.authUser !== null)}
+                      hidden={!item.showPublic}
+                      onAddRecipeOrDiseaseClick={this.handleAddRecipeOrDisease}
+                      onEditClick={this.handleEdit}
+                      onDeleteClick={this.handleDelete}
+                    // onHideClick={this.handleHide}
+                    />
+                    // }
+                    // return null;
                   })}
                 </ul>
               }

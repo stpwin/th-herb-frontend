@@ -117,7 +117,7 @@ class HerbalModal extends Component {
     if (updateDocSnapshot) {
       updateDocSnapshot.ref.update({
         ...data,
-        owner: user.uid,
+        // owner: user.uid,
         modifyAt: firestore.FieldValue.serverTimestamp()
       }).then(() => {
         this.setState({ showAdd: false, updating: false, })
@@ -125,13 +125,22 @@ class HerbalModal extends Component {
       return
     }
 
-    firestore.collection('herbals').add({
-      ...data,
-      owner: 'Anonymous',
-      createdAt: firestore.FieldValue.serverTimestamp()
-    }).then(() => {
+    let collectionRef = firestore.collection('herbals')
+    collectionRef.where('herbalName', '==', data.herbalName).get().then(doc => {
+      if (!doc.empty) {
+        return Promise.reject("ชื่อซ้ำในระบบ")
+      }
+      return collectionRef.add({
+        ...data,
+        owner: user.uid,
+        createdAt: firestore.FieldValue.serverTimestamp()
+      })
+    }).then(result => {
+      console.log("herbal added", result)
       this.setState({ showAdd: false, updating: false, })
-      // this.props.onHide()
+    }).catch(err => {
+      console.warn("herbal added fail: ", err)
+      this.setState({ updating: false, })
     })
   }
 

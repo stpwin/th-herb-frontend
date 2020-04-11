@@ -58,22 +58,26 @@ class RecipeModal extends Component {
   componentDidMount() {
     /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
-    firestore.collection("diseases").orderBy('createdAt').onSnapshot(({ docs }) => {
+
+    const recipesRef = firestore.collection('recipes')
+    const herbalsRef = firestore.collection('herbals')
+    const diseasesRef = firestore.collection('diseases')
+
+    diseasesRef.onSnapshot(({ docs }) => {
       const diseases = docs && docs.map(doc => {
         const data = doc.data()
         return { label: data.diseaseName, value: data.diseaseName, ref: doc.ref }
       })
       this.setState({ diseases })
     })
-    firestore.collection("herbals").orderBy('createdAt').onSnapshot(({ docs }) => {
+    herbalsRef.onSnapshot(({ docs }) => {
       const herbals = docs.map(doc => {
         const data = doc.data()
         return { label: data.herbalName, value: data.herbalName, ref: doc.ref }
       })
       this.setState({ herbals })
     })
-    firestore.collection('recipes').orderBy('createdAt').onSnapshot(({ docs }) => {
-
+    recipesRef.onSnapshot(({ docs }) => {
       docs.forEach(async (snapshot) => {
         const data = snapshot.data()
         /** @type {firebase.firestore.DocumentReference[]} */
@@ -143,7 +147,7 @@ class RecipeModal extends Component {
     if (updateDocSnapshot) {
       updateDocSnapshot.ref.update({
         ...data,
-        owner: user.uid,
+        // owner: user.uid,
         modifyAt: firestore.FieldValue.serverTimestamp()
       }).then(() => {
         this.setState({ showAdd: false, updating: false, })
@@ -153,7 +157,7 @@ class RecipeModal extends Component {
 
     firestore.add({ collection: 'recipes' }, {
       ...data,
-      owner: 'Anonymous',
+      owner: user.uid,
       createdAt: firestore.FieldValue.serverTimestamp()
     }).then(doc => {
       console.log("doc:", doc)
@@ -290,8 +294,8 @@ const RecipeList = ({ recipes, handleAdd, handleEdit, handleDelete }) =>
         <thead>
           <tr>
             <th style={{ width: "5%" }}>#</th>
-            <th>ชื่อตำรับ</th>
             <th>รักษาโรค</th>
+            <th>ชื่อตำรับ</th>
             <th>วิธีการ</th>
             <th>สมุนไพร</th>
             <th style={{ width: "10%" }}>สาธารณะ</th>
@@ -305,8 +309,8 @@ const RecipeList = ({ recipes, handleAdd, handleEdit, handleDelete }) =>
             // console.log("recipe", recipe)
             return <tr key={`recipe-${index}`}>
               <td className="text-center">{index + 1}</td>
-              <td>{data.recipeName}</td>
               <td>{recipe.diseaseName}</td>
+              <td>{data.recipeName}</td>
               <td>{data.heal}</td>
               <td>{recipe.herbalNames && recipe.herbalNames.join(", ")}</td>
               <td>{data.showPublic ? "แสดง" : "ไม่แสดง"}</td>

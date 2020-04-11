@@ -29,7 +29,7 @@ export class Login extends Component {
     this.setState({ loggingIn: true })
 
     auth.signInWithEmailAndPassword(email, password).then(userCredential => {
-      console.log(userCredential)
+      // console.log(userCredential)
       this.setState({ loggingIn: false })
     }).catch(err => {
       console.error(err)
