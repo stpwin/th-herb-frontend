@@ -55,10 +55,11 @@ export default class MediaItem extends Component {
           </p>
           <div>
             {(this.props.data && Object.entries(this.props.data).length > 0 && Object.entries(this.props.data).map(([k, v], index) => {
-              const name = v.recipeName
+              const name = v.diseaseName ? `${this.props.prefix}${v.diseaseName}` : `${this.props.prefix}ที่ ${index + 1} ${v.recipeName}`
+              // console.log(v)
               return (
                 <a key={`${this.props.uid}-${index}`} href={`/#${this.props.path}/${k}`}>
-                  <Button variant="success" className="mr-2 custom-button">{this.props.prefix} {index + 1} {name}</Button>
+                  <Button variant="success" className="mr-2 custom-button">{name}</Button>
                 </a>
               )
             })) || <span className="mr-1">ไม่พบข้อมูล{this.props.prefix}</span>}

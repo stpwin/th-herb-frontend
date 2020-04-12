@@ -13,7 +13,7 @@ import "./mainList.css"
 
 const showItems = [
   { name: "โรค", ref: "ตำหรับ" },
-  { name: "สมุนไพร", ref: "รักษา" }
+  { name: "สมุนไพร", ref: "รักษาโรค" }
 ]
 
 let images_path = storageConfig.disease_images_path
@@ -24,77 +24,133 @@ export class MainList extends Component {
     recipeModal: false,
     loading: true,
     showBy: "โรค",
-    linkPrefix: "ตำรับ",
-    // data: dataList,
-    diseasesData: {}
+    linkPrefix: "ตำหรับ",
+    listData: {}
+  }
+
+  // /**@param {firebase.firestore.QuerySnapshot} recipesSnap */
+  // fetchData = (recipesSnap) => {
+  //   if (recipesSnap) {
+  //     return this.processData(recipesSnap)
+  //   }
+
+  //   /**@type {firebase.firestore.Firestore} */
+  //   const firestore = this.props.firestore
+
+  //   firestore.collection('recipes').orderBy('createdAt').where('showPublic', '==', true).get().then(recipesSnap => {
+  //     if (recipesSnap.empty) return
+  //     this.processData(recipesSnap)
+  //   }).catch(err => {
+  //     // console.warn(err)
+  //   })
+  // }
+
+  /**@param {firebase.firestore.QuerySnapshot} recipesSnap */
+  processHerbals = (recipesSnap) => {
+    console.log("processData")
+    let listData = {}
+    this.setState({ listData })
+    if (recipesSnap.empty) return
+    const recipesFetch = []
+    const herbalsFetch = []
+    recipesSnap.forEach((recipeSnap) => {
+      if (recipeSnap.exists) {
+        const recipeData = recipeSnap.data()
+        /**@type {firebase.firestore.DocumentReference[]} */
+        const herbalRefs = recipeData.herbalRefs
+        /**@type {firebase.firestore.DocumentReference} */
+        const diseaseRef = recipeData.diseaseRef
+
+        const herbalsDocsFetch = herbalRefs.map(herbalRef => herbalRef.get())
+        const b = diseaseRef.get().then((diseaseDoc) => {
+          if (diseaseDoc.exists) {
+            const { diseaseName } = diseaseDoc.data()
+            // if (!diseaseData.showPublic) return
+            // const recipes = { ...(listData[diseaseData.diseaseName] && listData[diseaseData.diseaseName].recipes), [recipeSnap.id]: { ...recipeData } }
+            // listData[diseaseData.diseaseName] = { ...diseaseData, recipes }
+
+            const a = Promise.all(herbalsDocsFetch).then(herbalDocs => {
+              herbalDocs.forEach((herbalDoc) => {
+                const herbalData = herbalDoc.data()
+                const recipes = { ...(listData[herbalData.herbalName] && listData[herbalData.herbalName].recipes), [recipeSnap.id]: { ...recipeData, diseaseName } }
+                listData[herbalData.herbalName] = { ...herbalData, recipes }
+              })
+            })
+            console.log("each")
+            herbalsFetch.push(a)
+          }
+        })
+        recipesFetch.push(b)
+        // const a = Promise.all(herbalsDocsFetch).then(herbalDocs => {
+        //   herbalDocs.forEach((herbalDoc) => {
+        //     const herbalData = herbalDoc.data()
+        //     const recipes = { ...(listData[herbalData.herbalName] && listData[herbalData.herbalName].recipes), [recipeSnap.id]: { ...recipeData } }
+        //     listData[herbalData.herbalName] = { ...herbalData, recipes }
+        //   })
+        // })
+        // console.log("each")
+        // recipesFetch.push(a)
+      }
+    })
+    Promise.all([...herbalsFetch, ...recipesFetch]).then(() => {
+      console.log("done")
+      this.setState({
+        listData,
+        loading: false
+      })
+    })
   }
 
   /**@param {firebase.firestore.QuerySnapshot} recipesSnap */
-  fetchData = (recipesSnap) => {
-    let diseasesData = {}
-    this.setState({ diseasesData })
-    if (recipesSnap) {
-      // console.log("recipesSnap", recipesSnap.empty)
-      if (recipesSnap.empty) return
-      recipesSnap.forEach(recipeSnap => {
-        if (recipeSnap.exists) {
-          const recipeData = recipeSnap.data()
-          /**@type {firebase.firestore.DocumentReference} */
-          const diseaseRef = recipeData.diseaseRef
-          //getting diseaseRef
-          diseaseRef.get().then(diseaseDoc => {
-            if (diseaseDoc.exists) {
-              const diseaseData = diseaseDoc.data()
-              if (!diseaseData.showPublic) return
-              // console.log(diseaseData)
-              const recipes = { ...(diseasesData[diseaseData.diseaseName] && diseasesData[diseaseData.diseaseName].recipes), [recipeSnap.id]: { ...recipeData } }
-              diseasesData[diseaseData.diseaseName] = { ...diseaseData, recipes }
-              this.setState({
-                diseasesData,
-                loading: false
-              })
-            }
-          }).catch(err => {
-            // console.warn(err)
-          })
-        }
+  processDiseases = (recipesSnap) => {
+    let listData = {}
+    this.setState({ listData })
+    if (recipesSnap.empty) return
+    const fetchList = []
+    recipesSnap.forEach((recipeSnap) => {
+      if (recipeSnap.exists) {
+        const recipeData = recipeSnap.data()
+        /**@type {firebase.firestore.DocumentReference} */
+        const diseaseRef = recipeData.diseaseRef
+        const a = diseaseRef.get().then((diseaseDoc) => {
+          if (diseaseDoc.exists) {
+            const diseaseData = diseaseDoc.data()
+            if (!diseaseData.showPublic) return
+            const recipes = { ...(listData[diseaseData.diseaseName] && listData[diseaseData.diseaseName].recipes), [recipeSnap.id]: { ...recipeData } }
+            listData[diseaseData.diseaseName] = { ...diseaseData, recipes }
+          }
+        })
+        // console.log("each")
+        fetchList.push(a)
+      }
+    })
+    Promise.all(fetchList).then(() => {
+      this.setState({
+        listData,
+        loading: false
       })
-      return
+      console.log("done")
+    })
+  }
+
+  processData = data => {
+    const { showBy } = this.state
+
+    if (!data) {
+      /**@type {firebase.firestore.Firestore} */
+      const firestore = this.props.firestore
+      return firestore.collection('recipes').where('showPublic', '==', true).get().then(data => {
+        if (showBy === "โรค") {
+          return this.processDiseases(data)
+        }
+        this.processHerbals(data)
+      })
     }
 
-    /**@type {firebase.firestore.Firestore} */
-    const firestore = this.props.firestore
-
-    // console.log("recipesSnap")
-    firestore.collection('recipes').orderBy('createdAt').where('showPublic', '==', true).get().then(recipesSnap => {
-      if (recipesSnap.empty) return
-      recipesSnap.forEach(recipeSnap => {
-        if (recipeSnap.exists) {
-          const recipeData = recipeSnap.data()
-          /**@type {firebase.firestore.DocumentReference} */
-          const diseaseRef = recipeData.diseaseRef
-          //getting diseaseRef
-          diseaseRef.get().then(diseaseDoc => {
-            if (diseaseDoc.exists) {
-              const diseaseData = diseaseDoc.data()
-              if (!diseaseData.showPublic) return
-              // console.log(diseaseData)
-              const recipes = { ...(diseasesData[diseaseData.diseaseName] && diseasesData[diseaseData.diseaseName].recipes), [recipeSnap.id]: { ...recipeData } }
-              diseasesData[diseaseData.diseaseName] = { ...diseaseData, recipes }
-              this.setState({
-                diseasesData,
-                loading: false
-              })
-            }
-
-          }).catch(err => {
-            // console.warn(err)
-          })
-        }
-      })
-    }).catch(err => {
-      // console.warn(err)
-    })
+    if (showBy === "โรค") {
+      return this.processDiseases(data)
+    }
+    this.processHerbals(data)
   }
 
   componentDidMount() {
@@ -105,48 +161,24 @@ export class MainList extends Component {
     const firestore = this.props.firestore
 
     const recipesRef = firestore.collection('recipes').where('showPublic', '==', true)
-    const herbalsRef = firestore.collection('herbals').where('showPublic', '==', true)
-    const diseasesRef = firestore.collection('diseases').where('showPublic', '==', true)
-
+    let unsub
     auth.onAuthStateChanged(authUser => {
+      if (!unsub) {
+        unsub = recipesRef.onSnapshot(recipesSnap => {
+          this.processData(recipesSnap)
+        }, (error) => {
 
-      recipesRef.onSnapshot(recipesSnap => {
-        this.fetchData(recipesSnap)
+        })
+      }
+    })
+
+    if (!unsub) {
+      unsub = recipesRef.onSnapshot(recipesSnap => {
+        this.processData(recipesSnap)
       }, (error) => {
 
       })
-
-      herbalsRef.onSnapshot(s => {
-        this.fetchData()
-      }, (error) => {
-
-      })
-
-      diseasesRef.onSnapshot(s => {
-        this.fetchData()
-      }, (error) => {
-
-      })
-    })
-
-    recipesRef.onSnapshot(recipesSnap => {
-      this.fetchData(recipesSnap)
-    }, (error) => {
-
-    })
-
-
-    herbalsRef.onSnapshot(s => {
-      this.fetchData()
-    }, (error) => {
-
-    })
-
-    diseasesRef.onSnapshot(s => {
-      this.fetchData()
-    }, (error) => {
-
-    })
+    }
   }
 
   handleHideDiseaseModal = () => {
@@ -217,23 +249,20 @@ export class MainList extends Component {
   handleShowBySelect = (eventKey) => {
     const { showBy } = this.state
     if (showBy !== showItems[eventKey].name) {
+      images_path = showItems[eventKey].name === "โรค" ? storageConfig.disease_images_path : storageConfig.herbal_images_path
       this.setState({
         showBy: showItems[eventKey].name,
-        linkPrefix: showItems[eventKey].ref,
-        // data: showItems[eventKey].name === "โรค" ? dataList : herbList
+        linkPrefix: showItems[eventKey].ref
+      }, () => {
+        this.processData()
       })
-      images_path = showItems[eventKey].name === "โรค" ? storageConfig.disease_images_path : storageConfig.herbal_images_path
     }
-    // console.log(eventKey)
   }
 
   render() {
+    const { loading, diseaseModal, herbalModal, recipeModal, showBy, linkPrefix, listData } = this.state
 
-    const { loading, diseaseModal, herbalModal, recipeModal, showBy, linkPrefix, diseasesData } = this.state
-    // for (const [key, value] of Object.entries(diseasesData)) {
-    //   console.log(value)
-    // }
-    // Object.entries(diseasesData).map(([k, v], i) => {
+    // Object.entries(listData).map(([k, v], i) => {
     //   // console.log(v)
     // })
     return (
@@ -280,7 +309,7 @@ export class MainList extends Component {
               </Spinner> :
                 <ul className="list-unstyled">
                   {/* {data.map((item, i) => { */}
-                  {Object.entries(diseasesData).map(([k, item], i) => {
+                  {Object.entries(listData).map(([k, item], i) => {
                     // const item = 
                     // if (item.showPublic || (this.props.authUser !== null)) {
                     return <MediaItem
