@@ -115,7 +115,7 @@ class HerbalModal extends Component {
   handleSubmit = () => {
     /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
-    const { data, updateDocSnapshot } = this.state
+    const { data, data: { herbalName, scientificName, nativeName, description }, updateDocSnapshot } = this.state
 
     /** @type {firebase.User} */
     const user = this.props.authUser
@@ -125,11 +125,18 @@ class HerbalModal extends Component {
       return
     }
 
+    const trimed = {
+      ...data,
+      herbalName: herbalName.trim(),
+      scientificName: scientificName.trim(),
+      nativeName: nativeName.trim(),
+      description: description.trim(),
+    }
+
     this.setState({ updating: true })
     if (updateDocSnapshot) {
       updateDocSnapshot.ref.update({
-        ...data,
-        // owner: user.uid,
+        ...trimed,
         modifyAt: firestore.FieldValue.serverTimestamp()
       }).then(() => {
         this.setState({ showAdd: false, updating: false, })
@@ -138,12 +145,12 @@ class HerbalModal extends Component {
     }
 
     let collectionRef = firestore.collection('herbals')
-    collectionRef.where('herbalName', '==', data.herbalName).get().then(doc => {
+    collectionRef.where('herbalName', '==', trimed.herbalName).get().then(doc => {
       if (!doc.empty) {
         return Promise.reject("ชื่อซ้ำในระบบ")
       }
       return collectionRef.add({
-        ...data,
+        ...trimed,
         owner: user.uid,
         createdAt: firestore.FieldValue.serverTimestamp()
       })

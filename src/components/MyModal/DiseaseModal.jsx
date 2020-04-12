@@ -127,12 +127,18 @@ class DiseaseModal extends Component {
       this.props.showLogin()
       return
     }
-    const { data, updateDocSnapshot } = this.state
+    const { data, data: { diseaseName, description }, updateDocSnapshot } = this.state
     this.setState({ updating: true })
+
+    const trimed = {
+      ...data,
+      diseaseName: diseaseName.trim(),
+      description: description.trim(),
+    }
 
     if (updateDocSnapshot) {
       updateDocSnapshot.ref.update({
-        ...data,
+        ...trimed,
         // owner: user.uid,
         modifyAt: firestore.FieldValue.serverTimestamp()
       }).then(() => {
@@ -142,12 +148,12 @@ class DiseaseModal extends Component {
     }
 
     let collectionRef = firestore.collection('diseases')
-    collectionRef.where('diseaseName', '==', data.diseaseName).get().then(doc => {
+    collectionRef.where('diseaseName', '==', trimed.diseaseName).get().then(doc => {
       if (!doc.empty) {
         return Promise.reject("ชื่อซ้ำในระบบ")
       }
       return collectionRef.add({
-        ...data,
+        ...trimed,
         owner: user.uid,
         createdAt: firestore.FieldValue.serverTimestamp()
       })

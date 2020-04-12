@@ -146,7 +146,7 @@ class RecipeModal extends Component {
   handleSubmit = () => {
     /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
-    const { data, updateDocSnapshot } = this.state
+    const { data, data: { recipeName, heal, description }, updateDocSnapshot } = this.state
 
     /** @type {firebase.User} */
     const user = this.props.authUser
@@ -156,12 +156,18 @@ class RecipeModal extends Component {
       return
     }
 
+    const trimed = {
+      ...data,
+      recipeName: recipeName.trim(),
+      heal: heal.trim(),
+      description: description.trim(),
+    }
+
     this.setState({ updating: true })
 
     if (updateDocSnapshot) {
       updateDocSnapshot.ref.update({
-        ...data,
-        // owner: user.uid,
+        ...trimed,
         modifyAt: firestore.FieldValue.serverTimestamp()
       }).then(() => {
         this.setState({ showAdd: false, updating: false, })
@@ -170,7 +176,7 @@ class RecipeModal extends Component {
     }
 
     firestore.add({ collection: 'recipes' }, {
-      ...data,
+      ...trimed,
       owner: user.uid,
       createdAt: firestore.FieldValue.serverTimestamp()
     }).then(doc => {
