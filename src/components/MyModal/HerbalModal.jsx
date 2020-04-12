@@ -89,9 +89,10 @@ class HerbalModal extends Component {
   handleUploadDone = (url, name) => {
     this.setState({
       showUpload: false,
+      showAdd: true,
       selectedImageSrc: url,
       data: { ...this.state.data, image: name },
-      galleryImages: [...this.state.galleryImages, { url: url, name: name }]
+      galleryImages: [...this.state.galleryImages, { url, name }]
     })
   }
 
@@ -103,12 +104,12 @@ class HerbalModal extends Component {
   }
 
   handleImageClick = (e) => {
-    const imageName = e.target.getAttribute("data-img-name")
+    const image = e.target.getAttribute("data-img-name")
     this.setState({
       showAdd: true,
       showGallery: false,
       selectedImageSrc: e.target.src,
-      data: { ...this.state.data, image: imageName }
+      data: { ...this.state.data, image }
     })
   }
 
@@ -132,7 +133,7 @@ class HerbalModal extends Component {
       nativeName: nativeName.trim(),
       description: description.trim(),
     }
-
+    console.log(trimed)
     this.setState({ updating: true })
     if (updateDocSnapshot) {
       updateDocSnapshot.ref.update({
