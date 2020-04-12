@@ -189,7 +189,7 @@ class HerbalModal extends Component {
     const data = snapshot.data()
     this.setState({
       data,
-      selectedImageSrc: getDownloadUrl(images_path, data.image),
+      selectedImageSrc: data.image && getDownloadUrl(images_path, data.image),
       showAdd: true,
       updateDocSnapshot: snapshot
     })
