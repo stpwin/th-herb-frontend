@@ -16,7 +16,7 @@ const showItems = [
   { name: "สมุนไพร", ref: "รักษาโรค" }
 ]
 
-let images_path = storageConfig.disease_images_path
+// let images_path = storageConfig.disease_images_path
 export class MainList extends Component {
   state = {
     diseaseModal: false,
@@ -31,7 +31,7 @@ export class MainList extends Component {
   /**@param {firebase.firestore.QuerySnapshot} recipesSnap */
   processHerbals = (recipesSnap) => {
     this.props.doFetch()
-    console.log("processData")
+    // console.log("processData")
     let listData = {}
     this.setState({ listData })
     if (recipesSnap.empty) return
@@ -49,9 +49,6 @@ export class MainList extends Component {
         const b = diseaseRef.get().then((diseaseDoc) => {
           if (diseaseDoc.exists) {
             const { diseaseName } = diseaseDoc.data()
-            // if (!diseaseData.showPublic) return
-            // const recipes = { ...(listData[diseaseData.diseaseName] && listData[diseaseData.diseaseName].recipes), [recipeSnap.id]: { ...recipeData } }
-            // listData[diseaseData.diseaseName] = { ...diseaseData, recipes }
 
             const a = Promise.all(herbalsDocsFetch).then(herbalDocs => {
               herbalDocs.forEach((herbalDoc) => {
@@ -68,12 +65,7 @@ export class MainList extends Component {
       }
     })
     Promise.all([...herbalsFetch, ...recipesFetch]).then(() => {
-      // console.log("done")
       this.props.doneFetch(listData)
-      // this.setState({
-      //   listData,
-      //   false
-      // })
     })
   }
 
@@ -103,11 +95,6 @@ export class MainList extends Component {
     })
     Promise.all(fetchList).then(() => {
       this.props.doneFetch(listData)
-      // this.setState({
-      //   listData,
-      //   false
-      // })
-      // console.log("done")
     })
   }
 
@@ -136,9 +123,8 @@ export class MainList extends Component {
     if (key) {
       this.setState({
         showBy: showItems[key].name,
-        // linkPrefix: showItems[key].ref
       })
-      images_path = showItems[key].name === "โรค" ? storageConfig.disease_images_path : storageConfig.herbal_images_path
+      // images_path = showItems[key].name === "โรค" ? storageConfig.disease_images_path : storageConfig.herbal_images_path
     }
 
 
@@ -187,29 +173,20 @@ export class MainList extends Component {
     })
   }
 
-  // handleModifyDataModalSubmit = () => {
-  //   //Do validate
-  //   this.setState({
-  //     modifyDataModalShow: false
-  //   })
-  // }
 
   handleAddDisease = () => {
-    // console.log("handleAddDisease")
     this.setState({
       diseaseModal: true
     })
   }
 
   handleAddHerbal = () => {
-    // console.log("handleAddHerbal")
     this.setState({
       herbalModal: true
     })
   }
 
   handleAddRecipe = () => {
-    // console.log("handleAddHerbal")
     this.setState({
       recipeModal: true
     })
@@ -223,24 +200,18 @@ export class MainList extends Component {
     console.log("handleDelete", e.target.getAttribute("data-uid"))
   }
 
-  // handleHide = (e) => {
-  //   console.log("handleHide", e.target.getAttribute("data-uid"))
-  // }
-
   handleAddRecipeOrDisease = () => {
     if (this.state.showBy === "สมุนไพร") {
       return this.handleAddDisease()
     }
-    // console.log("handleAddRecipe")
   }
 
   handleShowBySelect = (eventKey) => {
     const { showBy } = this.state
     if (showBy !== showItems[eventKey].name) {
-      images_path = showItems[eventKey].name === "โรค" ? storageConfig.disease_images_path : storageConfig.herbal_images_path
+      // images_path = showItems[eventKey].name === "โรค" ? storageConfig.disease_images_path : storageConfig.herbal_images_path
       this.setState({
         showBy: showItems[eventKey].name,
-        // linkPrefix: showItems[eventKey].ref
       }, () => {
         localStorage.setItem("showBy", eventKey)
         this.processData()
@@ -250,10 +221,6 @@ export class MainList extends Component {
 
   render() {
     const { diseaseModal, herbalModal, recipeModal, showBy } = this.state
-
-    // Object.entries(listData).map(([k, v], i) => {
-    //   // console.log(v)
-    // })
     const result = this.props.status === "searchdone" ? this.props.searchResult : this.props.result
     return (
       <Container>
@@ -293,7 +260,6 @@ export class MainList extends Component {
           </Row>
         </div>}
 
-
         <Row>
           <Col>
             <div className="main-list">
@@ -303,8 +269,7 @@ export class MainList extends Component {
                 <ul className="list-unstyled">
 
                   {Object.entries(result).length > 0 ? Object.entries(result).map(([k, item], i) => {
-                    // const item = 
-                    // if (item.showPublic || (this.props.authUser !== null)) {
+                    const images_path = item.diseaseName ? storageConfig.disease_images_path : storageConfig.herbal_images_path
                     return <MediaItem
                       key={`media-${i}`}
                       uid={`media-${i}`}
@@ -313,16 +278,9 @@ export class MainList extends Component {
                       content={item.description}
                       data={item.recipes}
                       path={k}
-                      image={item.image ? getDownloadUrl(images_path, item.image) : `holder.js/255x255?text=${item.diseaseName || item.herbalName}`}
-                      // showTool={(this.props.authUser !== null)}
+                      image={item.image ? getDownloadUrl(images_path, item.image) : `holder.js/255x255?text=ไม่มีภาพ`}
                       hidden={!item.showPublic}
-                      onAddRecipeOrDiseaseClick={this.handleAddRecipeOrDisease}
-                      onEditClick={this.handleEdit}
-                      onDeleteClick={this.handleDelete}
-                    // onHideClick={this.handleHide}
                     />
-                    // }
-                    // return null;
                   }) : <div className="text-center">ไม่พบอะไรเลยจ้ะ</div>}
                 </ul>
               }
@@ -332,10 +290,6 @@ export class MainList extends Component {
         <DiseaseModal
           show={diseaseModal}
           onHide={this.handleHideDiseaseModal}
-        // onSubmit={this.handleModifyDataModalSubmit}
-        // showsubmit="true"
-        // submittext={modifyDataModalSubmitText}
-        // title={modifyDataModalTitle}
         />
         <HerbalModal
           show={herbalModal}

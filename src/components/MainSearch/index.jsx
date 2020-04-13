@@ -26,7 +26,7 @@ export class MainSearch extends Component {
       snapshot.docs.forEach((diseaseSnap) => {
         const diseaseFetch = diseaseSnap.ref.get().then(doc => {
           const diseaseData = doc.data()
-          console.log(diseaseData)
+          // console.log(diseaseData)
 
           return recipesRef.where('diseaseRef', '==', diseaseSnap.ref).where('showPublic', '==', true).get().then(recipeSnaps => {
             // console.log('recipes', recipeSnaps.size)
@@ -94,7 +94,7 @@ export class MainSearch extends Component {
       Promise.all(fetchList).then(() => {
         Promise.all(diseaseFetchList).then(() => {
           console.log("ALL done")
-          console.log(listData)
+          // console.log(listData)
           this.props.doneSearch(listData)
         })
 
