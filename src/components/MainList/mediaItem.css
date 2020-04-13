@@ -23,7 +23,7 @@
   max-height: 225px;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 5;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
 }
 
@@ -35,4 +35,23 @@
 .custom-button {
   line-height: 0.7 !important;
   border-radius: 0.1rem !important;
+  font-size: 13px !important;
+}
+
+.list-sub-button {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.image-holder {
+  min-width: 1rem;
+  /* max-height: 300px; */
+  width: auto !important;
+  height: auto !important;
+}
+
+.manage-button {
+  min-width: 127px;
+  /* font-size: 1vmin !important; */
 }

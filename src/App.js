@@ -18,6 +18,7 @@ import Navigation from "./components/Navigation"
 import MainSearch from "./components/MainSearch"
 import MainList from "./components/MainList"
 import Login from "./components/Login"
+import FullView from "./components/FullView"
 
 const initialState = window && window.__INITIAL_STATE__ // set initial state here
 const store = configureStore(initialState)
@@ -52,6 +53,7 @@ function App() {
           <Navigation />
           <MainSearch />
           <MainList />
+          <FullView />
         </div>
       </ReactReduxFirebaseProvider>
     </Provider>

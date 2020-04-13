@@ -1,8 +1,8 @@
 import React, { Component } from 'react'
 import PropTypes from "prop-types"
 
-import { Media, Dropdown, Badge, Button } from "react-bootstrap"
-import { FaBars, FaPlusCircle } from "react-icons/fa"
+import { Media, Button, Image, Row, Col } from "react-bootstrap"
+// import { FaBars, FaPlusCircle } from "react-icons/fa"
 
 import "./mediaItem.css"
 
@@ -25,46 +25,54 @@ export default class MediaItem extends Component {
   render() {
     return (
       <Media key={this.props.uid} style={{ opacity: this.props.hidden ? 1 : 1 }} as="li" className="my-4">
-        <a href={`#${this.props.path}`}>
-          <img
-            width={256}
-            height={256}
-            className="mr-3 image-holder"
-            src={this.props.image}
-            alt="Generic placeholder"
-          />
-        </a>
+        {/* <a href={`#${this.props.path}`}> */}
+        <Row>
+          <Col sm={5} md={3} >
+            <Image
+              rounded
+              fluid
+              // width={256}
+              // height={256}
+              className="mr-3 image-holder"
+              src={this.props.image}
+              alt={this.props.title}
+              data-path={this.props.path}
+              onClick={this.props.onImageClick}
+
+            />
+          </Col>
+          <Col>
+            <Row>
+              <Col>
+                <div style={{ display: "flex" }} className="mt-1">
+                  <h4 data-path={this.props.path} onClick={this.props.onImageClick}>{this.props.title}</h4>
+                </div>
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <p className="item-content">
+                  {`${this.props.content}`}
+                </p>
+              </Col>
+            </Row>
+            <Row>
+              <Col><div className="list-sub-button">
+                {(this.props.data && Object.entries(this.props.data).length > 0 && Object.entries(this.props.data).map(([k, v], index) => {
+                  const name = v.diseaseName ? `${this.props.prefix}${v.diseaseName}` : `${this.props.prefix}ที่ ${index + 1} ${v.recipeName}`
+                  return <Button key={`${this.props.uid}-${index}`} variant="success" className="mr-2 mb-1 custom-button" data-parent={this.props.path} data-uid={k} onClick={this.props.onSubClick}>{name}</Button>
+                })) || <span className="mr-1">ไม่พบข้อมูล{this.props.prefix}</span>}
+              </div>
+              </Col>
+            </Row>
+          </Col>
+        </Row>
+
 
         <Media.Body>
-          <div style={{ display: "flex" }}>
-            <a href={`#${this.props.path}`}><h4>{this.props.title}</h4></a><div className="title-badges">{this.props.hidden ? <Badge variant="warning" className="ml-2">ซ่อนจากสาธารณะ</Badge> : null}</div>
-            <span className="ml-auto"></span>
-            <Dropdown alignRight className="hide-toggle">
-              {this.props.showTool ? <Dropdown.Toggle variant="secondary-outline" id="dropdown-basic" size="sm">
-                <FaBars color="red" />
-              </Dropdown.Toggle> : null}
-              <Dropdown.Menu>
-                <Dropdown.Item data-uid={this.props.uid} onClick={this.props.onEditClick}>แก้ไข</Dropdown.Item>
-                <Dropdown.Item data-uid={this.props.uid} onClick={this.props.onHideClick}>{this.props.hidden ? "แสดงสู่สาธารณะ" : "ซ่อนจากสาธารณะ"}</Dropdown.Item>
-                <Dropdown.Item data-uid={this.props.uid} onClick={this.props.onDeleteClick}>ลบ</Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
-          </div>
-          <p className="item-content">
-            {`${this.props.content}`}
-          </p>
-          <div>
-            {(this.props.data && Object.entries(this.props.data).length > 0 && Object.entries(this.props.data).map(([k, v], index) => {
-              const name = v.diseaseName ? `${this.props.prefix}${v.diseaseName}` : `${this.props.prefix}ที่ ${index + 1} ${v.recipeName}`
-              // console.log(v)
-              return (
-                <a key={`${this.props.uid}-${index}`} href={`/#${this.props.path}/${k}`}>
-                  <Button variant="success" className="mr-2 custom-button">{name}</Button>
-                </a>
-              )
-            })) || <span className="mr-1">ไม่พบข้อมูล{this.props.prefix}</span>}
-            {this.props.showTool ? <Button className="add-herbal-btn" onClick={this.props.onAddRecipeOrDiseaseClick}><FaPlusCircle /></Button> : null}
-          </div>
+
+
+
         </Media.Body>
       </Media>
     )
@@ -75,7 +83,7 @@ MediaItem.propsTypes = {
   title: PropTypes.string,
   path: PropTypes.string,
   hidden: PropTypes.bool,
-  showTool: PropTypes.bool,
+  // showTool: PropTypes.bool,
   content: PropTypes.string,
   data: PropTypes.arrayOf(PropTypes.shape({
     path: PropTypes.string,
@@ -83,8 +91,10 @@ MediaItem.propsTypes = {
   })),
   uid: PropTypes.string,
   prefix: PropTypes.string,
-  onAddRecipeOrDiseaseClick: PropTypes.func,
-  onEditClick: PropTypes.func,
-  onDeleteClick: PropTypes.func,
-  onHideClick: PropTypes.func
+  onImageClick: PropTypes.func,
+  onSubClick: PropTypes.func
+  // onAddRecipeOrDiseaseClick: PropTypes.func,
+  // onEditClick: PropTypes.func,
+  // onDeleteClick: PropTypes.func,
+  // onHideClick: PropTypes.func
 }

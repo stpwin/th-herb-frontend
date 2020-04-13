@@ -192,19 +192,11 @@ export class MainList extends Component {
     })
   }
 
-  handleEdit = (e) => {
-    console.log("handleEdit", e.target.getAttribute("data-uid"))
-  }
-
-  handleDelete = (e) => {
-    console.log("handleDelete", e.target.getAttribute("data-uid"))
-  }
-
-  handleAddRecipeOrDisease = () => {
-    if (this.state.showBy === "สมุนไพร") {
-      return this.handleAddDisease()
-    }
-  }
+  // handleAddRecipeOrDisease = () => {
+  //   if (this.state.showBy === "สมุนไพร") {
+  //     return this.handleAddDisease()
+  //   }
+  // }
 
   handleShowBySelect = (eventKey) => {
     const { showBy } = this.state
@@ -219,30 +211,46 @@ export class MainList extends Component {
     }
   }
 
+  handleImageClick = e => {
+    const path = e.target.dataset.path
+    const data = this.state.listData[path]
+    // console.log()
+    this.props.showFullView(path, `${data}`)
+  }
+
+  handleSubClick = e => {
+    const parent = e.target.dataset.parent
+    const uid = e.target.dataset.uid
+    const data = this.state.listData[parent].recipes[uid]
+    // console.log(e.target.dataset.parent)
+    // console.log(this.state.listData[parent])
+    this.props.showFullView(parent, `${data}`)
+  }
+
   render() {
     const { diseaseModal, herbalModal, recipeModal, showBy } = this.state
     const result = this.props.status === "searchdone" ? this.props.searchResult : this.props.result
     return (
-      <Container>
+      <Container fluid>
         {this.props.authUser ? <Row className="justify-content-md-center mb-3">
 
           <Col xs lg={3}>
-            <Button variant="outline-primary" block onClick={this.handleAddDisease}>จัดการข้อมูลโรค</Button>
+            <Button variant="outline-primary" className="manage-button mb-1" block onClick={this.handleAddDisease}>จัดการโรค</Button>
           </Col>
           <Col xs lg={3}>
-            <Button variant="outline-primary" block onClick={this.handleAddHerbal}>จัดการข้อมูลสมุนไพร</Button>
+            <Button variant="outline-primary" className="manage-button mb-1" block onClick={this.handleAddHerbal}>จัดการสมุนไพร</Button>
           </Col>
           <Col xs lg={3}>
-            <Button variant="outline-primary" block onClick={this.handleAddRecipe}>จัดการข้อมูลตำรับ</Button>
+            <Button variant="outline-primary" className="manage-button mb-1" block onClick={this.handleAddRecipe}>จัดการตำรับ</Button>
           </Col>
         </Row> : null}
 
         {this.props.searchResult || this.props.status === "searching" ? null : <div className="filter-item">
           <Row>
-            <Col className="" style={{ display: "flex" }}>
+            <Col className="" style={{ display: "flex" }} sm={3}>
               <div className="mr-2" style={{ alignSelf: "center" }}>แสดงตาม</div>
               <Dropdown>
-                <Dropdown.Toggle variant="outline-secondary">
+                <Dropdown.Toggle variant="outline-secondary" size="sm">
                   {showBy}
                 </Dropdown.Toggle>
                 <Dropdown.Menu id="dropdown-item-button" title="แสดงตาม">
@@ -256,7 +264,7 @@ export class MainList extends Component {
               </Dropdown>
             </Col>
             <Col></Col>
-            <Col></Col>
+            {/* <Col></Col> */}
           </Row>
         </div>}
 
@@ -278,10 +286,12 @@ export class MainList extends Component {
                       content={item.description}
                       data={item.recipes}
                       path={k}
-                      image={item.image ? getDownloadUrl(images_path, item.image) : `holder.js/255x255?text=ไม่มีภาพ`}
+                      image={item.image ? getDownloadUrl(images_path, item.image) : `holder.js/400x400?text=ไม่มีภาพ`}
                       hidden={!item.showPublic}
+                      onImageClick={this.handleImageClick}
+                      onSubClick={this.handleSubClick}
                     />
-                  }) : <div className="text-center">ไม่พบอะไรเลยจ้ะ</div>}
+                  }) : <div className="text-center my-3">ไม่พบอะไรเลยจ้ะ</div>}
                 </ul>
               }
             </div>
@@ -319,6 +329,8 @@ const mapDispatchToProps = dispatch => ({
     dispatch({ type: 'DO_FETCH' }),
   doneFetch: (result) =>
     dispatch({ type: 'DONE_FETCH', result }),
+  showFullView: (title, body) =>
+    dispatch({ type: 'SHOW_FULLVIEW', title, body }),
 });
 
 export default compose(
