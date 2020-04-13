@@ -22,31 +22,15 @@ export class MainList extends Component {
     diseaseModal: false,
     herbalModal: false,
     recipeModal: false,
-    loading: true,
     showBy: "โรค",
-    linkPrefix: "ตำหรับ",
-    listData: {}
+    // linkPrefix: "ตำหรับ",
+    // true,
+    // listData: {}
   }
-
-  // /**@param {firebase.firestore.QuerySnapshot} recipesSnap */
-  // fetchData = (recipesSnap) => {
-  //   if (recipesSnap) {
-  //     return this.processData(recipesSnap)
-  //   }
-
-  //   /**@type {firebase.firestore.Firestore} */
-  //   const firestore = this.props.firestore
-
-  //   firestore.collection('recipes').orderBy('createdAt').where('showPublic', '==', true).get().then(recipesSnap => {
-  //     if (recipesSnap.empty) return
-  //     this.processData(recipesSnap)
-  //   }).catch(err => {
-  //     // console.warn(err)
-  //   })
-  // }
 
   /**@param {firebase.firestore.QuerySnapshot} recipesSnap */
   processHerbals = (recipesSnap) => {
+    this.props.doFetch()
     console.log("processData")
     let listData = {}
     this.setState({ listData })
@@ -76,33 +60,26 @@ export class MainList extends Component {
                 listData[herbalData.herbalName] = { ...herbalData, recipes }
               })
             })
-            console.log("each")
+            // console.log("each")
             herbalsFetch.push(a)
           }
         })
         recipesFetch.push(b)
-        // const a = Promise.all(herbalsDocsFetch).then(herbalDocs => {
-        //   herbalDocs.forEach((herbalDoc) => {
-        //     const herbalData = herbalDoc.data()
-        //     const recipes = { ...(listData[herbalData.herbalName] && listData[herbalData.herbalName].recipes), [recipeSnap.id]: { ...recipeData } }
-        //     listData[herbalData.herbalName] = { ...herbalData, recipes }
-        //   })
-        // })
-        // console.log("each")
-        // recipesFetch.push(a)
       }
     })
     Promise.all([...herbalsFetch, ...recipesFetch]).then(() => {
-      console.log("done")
-      this.setState({
-        listData,
-        loading: false
-      })
+      // console.log("done")
+      this.props.doneFetch(listData)
+      // this.setState({
+      //   listData,
+      //   false
+      // })
     })
   }
 
   /**@param {firebase.firestore.QuerySnapshot} recipesSnap */
   processDiseases = (recipesSnap) => {
+    this.props.doFetch()
     let listData = {}
     this.setState({ listData })
     if (recipesSnap.empty) return
@@ -125,11 +102,12 @@ export class MainList extends Component {
       }
     })
     Promise.all(fetchList).then(() => {
-      this.setState({
-        listData,
-        loading: false
-      })
-      console.log("done")
+      this.props.doneFetch(listData)
+      // this.setState({
+      //   listData,
+      //   false
+      // })
+      // console.log("done")
     })
   }
 
@@ -154,6 +132,16 @@ export class MainList extends Component {
   }
 
   componentDidMount() {
+    const key = localStorage.getItem("showBy")
+    if (key) {
+      this.setState({
+        showBy: showItems[key].name,
+        // linkPrefix: showItems[key].ref
+      })
+      images_path = showItems[key].name === "โรค" ? storageConfig.disease_images_path : storageConfig.herbal_images_path
+    }
+
+
     /**@type {firebase.auth.Auth} */
     const auth = this.props.firebase.auth()
 
@@ -252,22 +240,25 @@ export class MainList extends Component {
       images_path = showItems[eventKey].name === "โรค" ? storageConfig.disease_images_path : storageConfig.herbal_images_path
       this.setState({
         showBy: showItems[eventKey].name,
-        linkPrefix: showItems[eventKey].ref
+        // linkPrefix: showItems[eventKey].ref
       }, () => {
+        localStorage.setItem("showBy", eventKey)
         this.processData()
       })
     }
   }
 
   render() {
-    const { loading, diseaseModal, herbalModal, recipeModal, showBy, linkPrefix, listData } = this.state
+    const { diseaseModal, herbalModal, recipeModal, showBy } = this.state
 
     // Object.entries(listData).map(([k, v], i) => {
     //   // console.log(v)
     // })
+    const result = this.props.status === "searchdone" ? this.props.searchResult : this.props.result
     return (
       <Container>
         {this.props.authUser ? <Row className="justify-content-md-center mb-3">
+
           <Col xs lg={3}>
             <Button variant="outline-primary" block onClick={this.handleAddDisease}>จัดการข้อมูลโรค</Button>
           </Col>
@@ -278,7 +269,8 @@ export class MainList extends Component {
             <Button variant="outline-primary" block onClick={this.handleAddRecipe}>จัดการข้อมูลตำรับ</Button>
           </Col>
         </Row> : null}
-        <div className="filter-item">
+
+        {this.props.searchResult || this.props.status === "searching" ? null : <div className="filter-item">
           <Row>
             <Col className="" style={{ display: "flex" }}>
               <div className="mr-2" style={{ alignSelf: "center" }}>แสดงตาม</div>
@@ -299,28 +291,29 @@ export class MainList extends Component {
             <Col></Col>
             <Col></Col>
           </Row>
-        </div>
+        </div>}
+
 
         <Row>
           <Col>
             <div className="main-list">
-              {loading ? <Spinner animation="grow" role="status" variant="success">
+              {!(this.props.status === "done" || this.props.status === "searchdone") ? <Spinner animation="grow" role="status" variant="success">
                 <span className="sr-only">Loading...</span>
               </Spinner> :
                 <ul className="list-unstyled">
-                  {/* {data.map((item, i) => { */}
-                  {Object.entries(listData).map(([k, item], i) => {
+
+                  {Object.entries(result).length > 0 ? Object.entries(result).map(([k, item], i) => {
                     // const item = 
                     // if (item.showPublic || (this.props.authUser !== null)) {
                     return <MediaItem
                       key={`media-${i}`}
                       uid={`media-${i}`}
-                      prefix={linkPrefix}
+                      prefix={item.diseaseName ? "ตำรับ" : "รักษา"}
                       title={item.diseaseName || item.herbalName}
                       content={item.description}
                       data={item.recipes}
                       path={k}
-                      image={item.image ? getDownloadUrl(images_path, item.image) : "holder.js/255x255"}
+                      image={item.image ? getDownloadUrl(images_path, item.image) : `holder.js/255x255?text=${item.diseaseName || item.herbalName}`}
                       // showTool={(this.props.authUser !== null)}
                       hidden={!item.showPublic}
                       onAddRecipeOrDiseaseClick={this.handleAddRecipeOrDisease}
@@ -330,7 +323,7 @@ export class MainList extends Component {
                     />
                     // }
                     // return null;
-                  })}
+                  }) : <div className="text-center">ไม่พบอะไรเลยจ้ะ</div>}
                 </ul>
               }
             </div>
@@ -359,14 +352,19 @@ export class MainList extends Component {
 
 const mapStateToProps = state => ({
   show: state.login.show,
+  result: state.data.result,
+  searchResult: state.data.searchResult,
+  status: state.data.status,
   authUser: state.login.authUser
 });
 
 const mapDispatchToProps = dispatch => ({
   showLogin: () =>
     dispatch({ type: 'SHOW_LOGIN' }),
-  hideLogin: () =>
-    dispatch({ type: 'HIDE_LOGIN' }),
+  doFetch: () =>
+    dispatch({ type: 'DO_FETCH' }),
+  doneFetch: (result) =>
+    dispatch({ type: 'DONE_FETCH', result }),
 });
 
 export default compose(

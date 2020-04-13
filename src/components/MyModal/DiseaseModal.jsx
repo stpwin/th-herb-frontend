@@ -8,7 +8,7 @@ import * as Holder from "holderjs"
 
 import "./diseaseTable.css"
 
-import { FaPlus } from 'react-icons/fa'
+import { FaPlus, FaEye, FaEyeSlash, FaTools } from 'react-icons/fa'
 import { MyModal } from "./MyModal"
 import { Form, Col, Row, Button, Image, Table } from 'react-bootstrap'
 import { ToolButtons } from "./ToolButtons"
@@ -307,11 +307,11 @@ const DiseaseList = ({ diseases, handleAdd, handleEdit, handleDelete }) =>
       <Table bordered striped size="sm" responsive hover >
         <thead>
           <tr>
-            <th style={{ width: "5%" }}>#</th>
+            <th className="text-center" style={{ width: "5%" }}>#</th>
             <th style={{ width: "20%" }}>ชื่อโรค</th>
             <th style={{ width: "55%" }}>รายละเอียด</th>
-            <th style={{ width: "10%" }}>สาธารณะ</th>
-            <th style={{ width: "10%" }}>เครื่องมือ</th>
+            <th className="text-center" style={{ width: "5%" }}><FaEye /></th>
+            <th className="text-center" style={{ width: "10%" }}><FaTools /></th>
           </tr>
         </thead>
         <tbody>
@@ -321,7 +321,7 @@ const DiseaseList = ({ diseases, handleAdd, handleEdit, handleDelete }) =>
               <td className="text-center">{index + 1}</td>
               <td>{data.diseaseName}</td>
               <td><p className="td-fixed-content">{data.description}</p></td>
-              <td>{data.showPublic ? "แสดง" : "ไม่แสดง"}</td>
+              <td className="text-center">{data.showPublic ? <FaEye /> : <FaEyeSlash />}</td>
               <td >
                 <div style={{ alignSelf: "center" }} className="text-center">
                   <ToolButtons onDelete={() => handleDelete(disease)} onEdit={() => handleEdit(disease)} />

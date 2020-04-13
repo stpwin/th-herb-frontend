@@ -30,9 +30,9 @@ export class Navigation extends Component {
           </Nav>
           <Form inline>
             {this.props.authUser ?
-              <Nav.Link href="#manage" onClick={() => this.logout()}>ออกจากระบบ</Nav.Link>
+              <Nav.Link href="" onClick={() => this.logout()}>ออกจากระบบ</Nav.Link>
               :
-              <Nav.Link href="#manage" onClick={() => this.props.showLogin()}>จัดการข้อมูล</Nav.Link>}
+              <Nav.Link href="" onClick={() => this.props.showLogin()}>จัดการข้อมูล</Nav.Link>}
 
           </Form>
         </Navbar.Collapse>

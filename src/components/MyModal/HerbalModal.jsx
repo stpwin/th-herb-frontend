@@ -9,7 +9,7 @@ import { getDownloadUrl } from "../../utils"
 import { MyModal } from "./MyModal"
 import { Form, Col, Row, Button, Image, Table } from 'react-bootstrap'
 import { ToolButtons } from "./ToolButtons"
-import { FaPlus } from 'react-icons/fa'
+import { FaPlus, FaEye, FaEyeSlash, FaTools } from 'react-icons/fa'
 import Gallery from "./Gallery"
 import Upload from "./Upload"
 
@@ -291,13 +291,13 @@ const HerbalList = ({ herbals, handleAdd, handleEdit, handleDelete }) =>
       <Table bordered striped size="sm" responsive hover >
         <thead>
           <tr>
-            <th style={{ width: "5%" }}>#</th>
-            <th>ชื่อสมุนไพร</th>
+            <th className="text-center" style={{ width: "5%" }}>#</th>
+            <th style={{ width: "15%" }}>ชื่อสมุนไพร</th>
             <th>ชื่อวิทยาศาสตร์</th>
             <th>ชื่อท้องถิ่น</th>
             <th>สรรพคุณ</th>
-            <th style={{ width: "10%" }}>สาธารณะ</th>
-            <th style={{ width: "10%" }}>เครื่องมือ</th>
+            <th className="text-center" style={{ width: "5%" }}><FaEye /></th>
+            <th className="text-center" style={{ width: "10%" }}><FaTools /></th>
           </tr>
         </thead>
         <tbody>
@@ -309,7 +309,7 @@ const HerbalList = ({ herbals, handleAdd, handleEdit, handleDelete }) =>
               <td>{data.scientificName}</td>
               <td><p className="td-fixed-content">{data.nativeName}</p></td>
               <td><p className="td-fixed-content">{data.description}</p></td>
-              <td>{data.showPublic ? "แสดง" : "ไม่แสดง"}</td>
+              <td className="text-center">{data.showPublic ? <FaEye /> : <FaEyeSlash />}</td>
               <td >
                 <div style={{ alignSelf: "center" }} className="text-center">
                   <ToolButtons onDelete={() => handleDelete(herbal)} onEdit={() => handleEdit(herbal)} />

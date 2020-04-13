@@ -7,7 +7,7 @@ import { hydrate } from "../../utils"
 import { MyModal } from "./MyModal"
 import { Form, Col, Row, Button, Table } from 'react-bootstrap'
 import { ToolButtons } from "./ToolButtons"
-import { FaPlus } from 'react-icons/fa'
+import { FaPlus, FaEye, FaEyeSlash, FaTools } from 'react-icons/fa'
 import Select from 'react-select';
 
 const healGroup = [
@@ -28,6 +28,7 @@ const healGroup = [
   { label: "ปิดปากแผล", value: "ปิดปากแผล" },
   { label: "ทาน", value: "ทาน" },
   { label: "แช่น้ำดื่ม", value: "แช่น้ำดื่ม" },
+  { label: "บด", value: "บด" },
 ]
 
 
@@ -180,24 +181,6 @@ class RecipeModal extends Component {
       owner: user.uid,
       createdAt: firestore.FieldValue.serverTimestamp()
     }).then(doc => {
-      console.log("doc:", doc)
-      // if (data.diseaseRef) {
-      //   return firestore.runTransaction(t => {
-      //     return t.get(data.diseaseRef).then(disease_doc => {
-      //       const prevRefs = disease_doc.data().recipeRefs || []
-      //       t.update(data.diseaseRef, { recipeRefs: [...prevRefs, doc] })
-      //     })
-      //   }).then(result => {
-      //     console.log("success", result)
-
-      //     this.setState({
-      //       updating: false,
-      //     })
-      //     this.props.onHide()
-      //   }).catch(err => {
-      //     console.log(err)
-      //   })
-      // }
       console.log("recipe added")
       this.setState({ showAdd: false, updating: false, })
     })
@@ -313,13 +296,13 @@ const RecipeList = ({ recipes, handleAdd, handleEdit, handleDelete }) =>
       <Table bordered striped size="sm" responsive hover >
         <thead>
           <tr>
-            <th style={{ width: "5%" }}>#</th>
+            <th className="text-center" style={{ width: "5%" }}>#</th>
             <th>รักษาโรค</th>
             <th>ชื่อตำรับ</th>
             <th>วิธีการ</th>
             <th>สมุนไพร</th>
-            <th style={{ width: "10%" }}>สาธารณะ</th>
-            <th style={{ width: "10%" }}>เครื่องมือ</th>
+            <th className="text-center" style={{ width: "5%" }}><FaEye /></th>
+            <th className="text-center" style={{ width: "10%" }}><FaTools /></th>
           </tr>
         </thead>
         <tbody>
@@ -332,8 +315,8 @@ const RecipeList = ({ recipes, handleAdd, handleEdit, handleDelete }) =>
               <td>{recipe.diseaseName}</td>
               <td>{data.recipeName}</td>
               <td>{data.heal}</td>
-              <td>{recipe.herbalNames && recipe.herbalNames.join(", ")}</td>
-              <td>{data.showPublic ? "แสดง" : "ไม่แสดง"}</td>
+              <td><p className="td-fixed-content">{recipe.herbalNames && recipe.herbalNames.join(", ")}</p></td>
+              <td className="text-center">{data.showPublic ? <FaEye /> : <FaEyeSlash />}</td>
               <td >
                 <div style={{ alignSelf: "center" }} className="text-center">
                   <ToolButtons onDelete={() => handleDelete(recipe.snapshot)} onEdit={() => handleEdit(recipe)} />
