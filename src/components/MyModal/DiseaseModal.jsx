@@ -17,7 +17,7 @@ import Gallery from "./Gallery"
 import Upload from "./Upload"
 
 const images_path = storageConfig.disease_images_path
-
+let diseasesListener
 class DiseaseModal extends Component {
   state = {
     data: {
@@ -41,22 +41,43 @@ class DiseaseModal extends Component {
   fetchData = () => {
     /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
+    console.log("start listening")
     // console.log(this.props)
-    firestore.collection('diseases').orderBy('createdAt').onSnapshot(({ docs: diseases }) => {
+    if (diseasesListener) return
+    diseasesListener = firestore.collection('diseases').orderBy('createdAt').onSnapshot(({ docs: diseases }) => {
       this.setState({ diseases })
     }, (error) => {
       // console.warn(error)
     })
   }
 
+  stopListener = () => {
+    if (diseasesListener) {
+      console.log("stop disease listener")
+      diseasesListener()
+    }
+  }
+
+  componentWillUnmount() {
+    console.log("Disease Modal Unmount")
+    this.stopListener()
+  }
+
   componentDidMount() {
+    console.log("Disease Modal mount")
+    this.stopListener()
+    // return //DISABLED
     Holder.run({ images: ".image-preview" })
     /**@type {firebase.auth.Auth} */
     const auth = this.props.firebase.auth()
+
     auth.onAuthStateChanged(user => {
-      this.fetchData()
+      if (user) {
+        this.fetchData()
+      }
+
     })
-    this.fetchData()
+    // this.fetchData()
   }
 
   componentDidUpdate() {
@@ -330,7 +351,7 @@ const DiseaseList = ({ diseases, handleAdd, handleEdit, handleDelete }) =>
             </tr>
           })) ||
             (<tr>
-              <td colSpan={4} className="text-center py-5">ไม่มีข้อมูล</td>
+              <td colSpan={5} className="text-center py-5">ไม่มีข้อมูล</td>
             </tr>)}
         </tbody>
       </Table>

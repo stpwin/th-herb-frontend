@@ -31,7 +31,9 @@ const healGroup = [
   { label: "บด", value: "บด" },
 ]
 
-
+let diseasesListener
+let herbalsListener
+let recipesListener
 class RecipeModal extends Component {
   state = {
     showAdd: false,
@@ -62,57 +64,87 @@ class RecipeModal extends Component {
     const recipesRef = firestore.collection('recipes')
     const herbalsRef = firestore.collection('herbals')
     const diseasesRef = firestore.collection('diseases')
-
-    diseasesRef.onSnapshot(({ docs }) => {
-      const diseases = docs && docs.map(doc => {
-        const data = doc.data()
-        return { label: data.diseaseName, value: data.diseaseName, ref: doc.ref }
-      })
-      this.setState({ diseases })
-    }, (error) => {
-
-    })
-    herbalsRef.onSnapshot(({ docs }) => {
-      const herbals = docs.map(doc => {
-        const data = doc.data()
-        return { label: data.herbalName, value: data.herbalName, ref: doc.ref }
-      })
-      this.setState({ herbals })
-    }, (error) => {
-
-    })
-    recipesRef.onSnapshot(({ docs }) => {
-      docs.forEach(async (snapshot) => {
-        const data = snapshot.data()
-        /** @type {firebase.firestore.DocumentReference[]} */
-        const herbalRefs = data.herbalRefs
-        await hydrate(data, ['diseaseRef'])
-
-        this.setState({
-          recipes: { ...this.state.recipes, [snapshot.id]: { snapshot, diseaseName: data.diseaseRef && data.diseaseRef.diseaseName } }
+    console.log("start listening")
+    if (!diseasesListener) {
+      diseasesListener = diseasesRef.onSnapshot(({ docs }) => {
+        const diseases = docs && docs.map(doc => {
+          const data = doc.data()
+          return { label: data.diseaseName, value: data.diseaseName, ref: doc.ref }
         })
+        this.setState({ diseases })
+      }, (error) => {
 
-        const herbalDocs = herbalRefs && herbalRefs.map(herbal => herbal.get())
-        herbalDocs && Promise.all(herbalDocs).then(result => {
-          const herbalNames = result.map(s => (s.exists && s.data().herbalName) || "ข้อมูลถูกลบ")
-          const updateData = { [snapshot.id]: { ...this.state.recipes[snapshot.id], herbalNames } }
+      })
+    }
+
+    if (!herbalsListener) {
+      herbalsListener = herbalsRef.onSnapshot(({ docs }) => {
+        const herbals = docs.map(doc => {
+          const data = doc.data()
+          return { label: data.herbalName, value: data.herbalName, ref: doc.ref }
+        })
+        this.setState({ herbals })
+      }, (error) => {
+
+      })
+    }
+
+    if (!recipesListener) {
+      recipesListener = recipesRef.onSnapshot(({ docs }) => {
+        docs.forEach(async (snapshot) => {
+          const data = snapshot.data()
+          /** @type {firebase.firestore.DocumentReference[]} */
+          const herbalRefs = data.herbalRefs
+          await hydrate(data, ['diseaseRef'])
+
           this.setState({
-            recipes: { ...this.state.recipes, ...updateData }
+            recipes: { ...this.state.recipes, [snapshot.id]: { snapshot, diseaseName: data.diseaseRef && data.diseaseRef.diseaseName } }
+          })
+
+          const herbalDocs = herbalRefs && herbalRefs.map(herbal => herbal.get())
+          herbalDocs && Promise.all(herbalDocs).then(result => {
+            const herbalNames = result.map(s => (s.exists && s.data().herbalName) || "ข้อมูลถูกลบ")
+            const updateData = { [snapshot.id]: { ...this.state.recipes[snapshot.id], herbalNames } }
+            this.setState({
+              recipes: { ...this.state.recipes, ...updateData }
+            })
           })
         })
-      })
-    }, (error) => {
+      }, (error) => {
 
-    })
+      })
+    }
+
+  }
+
+  stopListener = () => {
+    if (diseasesListener) {
+      diseasesListener()
+    }
+    if (herbalsListener) {
+      herbalsListener()
+    }
+    if (recipesListener) {
+      recipesListener()
+    }
+  }
+
+  componentWillUnmount() {
+    this.stopListener()
   }
 
   componentDidMount() {
+    this.stopListener()
+    // return //DISABLED
     /**@type {firebase.auth.Auth} */
     const auth = this.props.firebase.auth()
     auth.onAuthStateChanged(user => {
-      this.fetchData()
+      if (user) {
+        this.fetchData()
+      }
+
     })
-    this.fetchData()
+    // this.fetchData()
   }
 
   handleChange = (e) => {

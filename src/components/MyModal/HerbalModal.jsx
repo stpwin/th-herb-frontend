@@ -14,6 +14,7 @@ import Gallery from "./Gallery"
 import Upload from "./Upload"
 
 const images_path = storageConfig.herbal_images_path
+let herbalsListener
 class HerbalModal extends Component {
   state = {
     showAdd: false,
@@ -39,7 +40,9 @@ class HerbalModal extends Component {
   fetchData = () => {
     /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
-    firestore.collection('herbals').orderBy('createdAt').onSnapshot(({ docs: herbals }) => {
+    console.log("start listening")
+    if (herbalsListener) return
+    herbalsListener = firestore.collection('herbals').orderBy('createdAt').onSnapshot(({ docs: herbals }) => {
       this.setState({
         herbals
       })
@@ -48,14 +51,29 @@ class HerbalModal extends Component {
     })
   }
 
+  stopListener = () => {
+    if (herbalsListener) {
+      console.log("stop herbals listener")
+      herbalsListener()
+    }
+  }
+
+  componentWillUnmount() {
+    this.stopListener()
+  }
+
   componentDidMount() {
+    this.stopListener()
+    // return //DISABLED
     Holder.run({ images: ".image-preview" })
     /**@type {firebase.auth.Auth} */
     const auth = this.props.firebase.auth()
     auth.onAuthStateChanged(user => {
-      this.fetchData()
+      if (user) {
+        this.fetchData()
+      }
     })
-    this.fetchData()
+    // this.fetchData()
   }
 
   componentDidUpdate() {
@@ -133,7 +151,7 @@ class HerbalModal extends Component {
       nativeName: nativeName.trim(),
       description: description.trim(),
     }
-    console.log(trimed)
+    // console.log(trimed)
     this.setState({ updating: true })
     if (updateDocSnapshot) {
       updateDocSnapshot.ref.update({

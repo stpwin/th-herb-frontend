@@ -2,3 +2,59 @@
   width: 80% !important;
   max-width: none !important;
 }
+
+.modal-dialog {
+  position: relative;
+  width: auto;
+  margin: 0.5rem auto !important;
+  pointer-events: none;
+}
+
+.view-content-header {
+  text-shadow: 1px 1px 5px rgb(134, 134, 134);
+}
+
+.image-herbal {
+  max-width: 5rem;
+  /* padding: 0.5rem; */
+  margin-right: 1rem;
+  width: auto !important;
+  height: auto !important;
+  transition: padding 0.1s;
+}
+
+/* .image-herbal:hover {
+  padding: 0rem;
+  height: auto !important;
+} */
+
+.view-content-image {
+  /* white-space: pre-line; */
+  /* font-family: inherit; */
+  /* font-size: 16px; */
+  /* overflow-x: unset; */
+  display: flex;
+  overflow: auto;
+  max-height: 11rem;
+  margin-bottom: 2vh;
+  /* overflow: hidden; */
+}
+
+.view-content {
+  white-space: pre-line;
+  font-family: inherit;
+  font-size: 16px;
+  overflow-x: unset;
+  overflow-y: auto;
+  max-height: 11rem;
+  /* padding: 1vh; */
+  margin-bottom: 2vh;
+}
+
+.media {
+    margin-right: 1rem;
+}
+
+.media-body {
+    align-self: center;
+}

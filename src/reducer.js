@@ -3,7 +3,7 @@ import { firebaseReducer as firebase } from 'react-redux-firebase'
 import { firestoreReducer as firestore } from 'redux-firestore'
 import { loginReducer as login } from './reducer.login'
 import { dataReducer as data } from './reducer.data'
-import { fullviewReducer as fullView } from "./reducer.fullview"
+import { modalReducer as modal } from "./reducer.modal"
 // import firebase from 'react-redux-firebase/lib/reducer'
 // import firestore from 'redux-firestore/lib/reducer'
 
@@ -12,7 +12,7 @@ const rootReducer = combineReducers({
     firestore,
     login,
     data,
-    fullView
+    modal
 })
 
 export default rootReducer
