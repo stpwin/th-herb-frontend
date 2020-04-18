@@ -38,10 +38,18 @@ class DiseaseModal extends Component {
     updateDocSnapshot: null
   }
 
-  fetchData = () => {
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.show && !diseasesListener) {
+      this.startListen()
+    } else if (!nextProps.show) {
+      this.stopListen()
+    }
+  }
+
+  startListen = () => {
     /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
-    console.log("start listening")
+    console.log("startListen")
     // console.log(this.props)
     if (diseasesListener) return
     diseasesListener = firestore.collection('diseases').orderBy('createdAt').onSnapshot(({ docs: diseases }) => {
@@ -51,21 +59,21 @@ class DiseaseModal extends Component {
     })
   }
 
-  stopListener = () => {
+  stopListen = () => {
     if (diseasesListener) {
-      console.log("stop disease listener")
+      console.log("stopListen")
       diseasesListener()
     }
   }
 
   componentWillUnmount() {
     console.log("Disease Modal Unmount")
-    this.stopListener()
+    this.stopListen()
   }
 
   componentDidMount() {
     console.log("Disease Modal mount")
-    this.stopListener()
+    // this.stopListen()
     // return //DISABLED
     Holder.run({ images: ".image-preview" })
     /**@type {firebase.auth.Auth} */
@@ -73,11 +81,11 @@ class DiseaseModal extends Component {
 
     auth.onAuthStateChanged(user => {
       if (user) {
-        this.fetchData()
+        // this.startListen()
       }
 
     })
-    // this.fetchData()
+    // this.startListen()
   }
 
   componentDidUpdate() {

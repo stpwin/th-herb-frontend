@@ -61,7 +61,7 @@ export default class MediaItem extends Component {
               <Row>
                 <Col><div className="list-sub-button">
                   {(this.props.data && Object.entries(this.props.data).length > 0 && Object.entries(this.props.data).map(([k, v], index) => {
-                    const name = v.diseaseName ? `${this.props.prefix}${v.diseaseName}` : `${this.props.prefix}ที่ ${index + 1} ${v.recipeName}`
+                    const name = (this.props.showBy === "โรค") ? `${this.props.prefix}ที่ ${index + 1} ${v.recipeName || ""}` : `${this.props.prefix}${v.diseaseName}`
                     return <Button key={`${this.props.uid}-${index}`} variant="success" className="mr-2 mb-1 custom-button" data-parent={this.props.path} data-uid={k} data-name={name} onClick={this.props.onSubClick}>{name}</Button>
                   })) || <span className="mr-1">ไม่พบข้อมูล{this.props.prefix}</span>}
                 </div>

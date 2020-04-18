@@ -2,12 +2,12 @@ import React, { Component, Fragment } from 'react'
 import { compose } from 'redux'
 import { connect } from 'react-redux';
 import { withFirestore } from 'react-redux-firebase'
-import { hydrate } from "../../utils"
+// import { hydrate } from "../../utils"
 
 import { MyModal } from "./MyModal"
-import { Form, Col, Row, Button, Table } from 'react-bootstrap'
+import { Form, Col, Row, Button, Table, ButtonGroup } from 'react-bootstrap'
 import { ToolButtons } from "./ToolButtons"
-import { FaPlus, FaEye, FaEyeSlash, FaTools } from 'react-icons/fa'
+import { FaPlusCircle, FaEye, FaEyeSlash, FaTools, FaChevronLeft, FaChevronRight } from 'react-icons/fa'
 import Select from 'react-select';
 
 const healGroup = [
@@ -31,8 +31,8 @@ const healGroup = [
   { label: "บด", value: "บด" },
 ]
 
-let diseasesListener
-let herbalsListener
+// let diseasesListener
+// let herbalsListener
 let recipesListener
 class RecipeModal extends Component {
   state = {
@@ -42,109 +42,169 @@ class RecipeModal extends Component {
     /** @type {firebase.firestore.DocumentReference[]} */
     recipes: {},
     updating: false,
-    selectHerbals: [],
-    selectDisease: "",
+    // selectHerbals: [],
+    // selectDisease: "",
     data: {
       recipeName: "",
       heal: "",
       description: "",
       /** @type {firebase.firestore.DocumentReference} */
       diseaseRef: null,
+      diseaseName: "",
       showPublic: true,
       /** @type {firebase.firestore.DocumentReference[]} */
-      herbalRefs: []
+      herbalRefs: [],
+      herbals: []
     },
     /** @type {firebase.firestore.DocumentSnapshot} */
     updateDocSnapshot: null,
+    limit: 12,
+    lastVisible: null,
+    firstSnapshotList: [],
+    lastFirstVisible: null,
+    offset: 0,
+    finalPage: false,
+    prevDisable: true,
+    nextDisable: false,
   }
 
-  fetchData = () => {
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.show && !recipesListener) {
+      this.startListen()
+      this.fetchHerbalDisease()
+    } else if (!nextProps.show) {
+      this.stopListen()
+    }
+  }
+
+  fetchHerbalDisease = () => {
+    /** @type {firebase.firestore.Firestore} */
+    const firestore = this.props.firestore
+    const herbalsRef = firestore.collection('herbals')
+    const diseasesRef = firestore.collection('diseases')
+
+    diseasesRef.get().then(({ docs }) => {
+      const diseases = docs && docs.map(doc => {
+        const data = doc.data()
+        return { label: data.diseaseName, value: data.diseaseName, ref: doc.ref }
+      })
+      this.setState({ diseases })
+    }, (error) => {
+
+    })
+
+    herbalsRef.get().then(({ docs }) => {
+      const herbals = docs.map(doc => {
+        const data = doc.data()
+        return { label: data.herbalName, value: data.herbalName, image: data.image, ref: doc.ref }
+      })
+      this.setState({ herbals })
+    }, (error) => {
+
+    })
+  }
+
+  startListen = (prev = false) => {
     /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
     const recipesRef = firestore.collection('recipes')
-    const herbalsRef = firestore.collection('herbals')
-    const diseasesRef = firestore.collection('diseases')
-    console.log("start listening")
-    if (!diseasesListener) {
-      diseasesListener = diseasesRef.onSnapshot(({ docs }) => {
-        const diseases = docs && docs.map(doc => {
-          const data = doc.data()
-          return { label: data.diseaseName, value: data.diseaseName, ref: doc.ref }
-        })
-        this.setState({ diseases })
-      }, (error) => {
-
-      })
-    }
-
-    if (!herbalsListener) {
-      herbalsListener = herbalsRef.onSnapshot(({ docs }) => {
-        const herbals = docs.map(doc => {
-          const data = doc.data()
-          return { label: data.herbalName, value: data.herbalName, ref: doc.ref }
-        })
-        this.setState({ herbals })
-      }, (error) => {
-
-      })
-    }
 
     if (!recipesListener) {
-      recipesListener = recipesRef.onSnapshot(({ docs }) => {
-        docs.forEach(async (snapshot) => {
-          const data = snapshot.data()
-          /** @type {firebase.firestore.DocumentReference[]} */
-          const herbalRefs = data.herbalRefs
-          await hydrate(data, ['diseaseRef'])
+      console.log("startListen")
+      let query = recipesRef.orderBy('diseaseName').limit(this.state.limit).startAfter(this.state.lastVisible)
+      if (prev) {
+        console.log("Prev first:", this.state.firstSnapshotList[this.state.offset].id)
+        query = recipesRef.orderBy('diseaseName').limit(this.state.limit).startAt(this.state.firstSnapshotList[this.state.offset])
+      }
+      recipesListener = query.onSnapshot({ includeMetadataChanges: true }, recipeSnap => {
+        // console.log("onSnap")
+
+        // recipeSnap.docChanges().forEach(change => {
+        //   console.log("change.type:", change.type)
+        //   console.log("fromCache:", recipeSnap.metadata.fromCache)
+        // })
+
+        if (recipeSnap.empty) {
+          console.log("Empty")
+          this.setState({
+            finalPage: true,
+            nextDisable: true,
+            offset: this.state.offset > 0 && this.state.offset - 1
+          })
+          return
+        }
+        this.setState({
+          recipes: {}
+        })
+        const firstVisible = recipeSnap.docs[0]
+        const lastVisible = recipeSnap.docs[recipeSnap.docs.length - 1]
+
+        // console.log("lastFirstVisible:", lastFirstVisible.id)
+        console.log("lastVisible:", lastVisible.id)
+        // console.log("recipeSnap empty:", recipeSnap.empty)
+        let firstSnapshotList = this.state.firstSnapshotList
+        if (this.state.firstSnapshotList.findIndex(item => item.id === firstVisible.id) === -1) {
+          console.log("add first: ", firstVisible.id)
+          firstSnapshotList.push(firstVisible)
+        }
+        this.setState({
+          firstSnapshotList,
+          finalPage: false,
+          nextDisable: false,
+          // lastFirstVisible,
+          lastVisible,
+        })
+        recipeSnap.docs.forEach((snapshot) => {
+          const { diseaseName, herbals } = snapshot.data()
+          // /** @type {firebase.firestore.DocumentReference[]} */
+          // const herbalRefs = data.herbalRefs
+          // const herbals = data.herbals
+          // await hydrate(data, ['diseaseRef'])
 
           this.setState({
-            recipes: { ...this.state.recipes, [snapshot.id]: { snapshot, diseaseName: data.diseaseRef && data.diseaseRef.diseaseName } }
+            recipes: { ...this.state.recipes, [snapshot.id]: { snapshot, diseaseName, herbals } },
           })
 
-          const herbalDocs = herbalRefs && herbalRefs.map(herbal => herbal.get())
-          herbalDocs && Promise.all(herbalDocs).then(result => {
-            const herbalNames = result.map(s => (s.exists && s.data().herbalName) || "ข้อมูลถูกลบ")
-            const updateData = { [snapshot.id]: { ...this.state.recipes[snapshot.id], herbalNames } }
-            this.setState({
-              recipes: { ...this.state.recipes, ...updateData }
-            })
-          })
+          // const herbalDocs = herbalRefs && herbalRefs.map(herbal => herbal.get())
+          // herbalDocs && Promise.all(herbalDocs).then(result => {
+          //   const herbalNames = result.map(s => (s.exists && s.data().herbalName) || "ข้อมูลถูกลบ")
+          //   const updateData = { [snapshot.id]: { ...this.state.recipes[snapshot.id], herbalNames } }
+          //   this.setState({
+          //     recipes: { ...this.state.recipes, ...updateData }
+          //   })
+          // })
         })
       }, (error) => {
-
+        console.warn(error)
       })
     }
 
   }
 
-  stopListener = () => {
-    if (diseasesListener) {
-      diseasesListener()
-    }
-    if (herbalsListener) {
-      herbalsListener()
-    }
+  stopListen = () => {
+    console.log("stopListen")
     if (recipesListener) {
       recipesListener()
+      recipesListener = null
     }
   }
 
   componentWillUnmount() {
-    this.stopListener()
+    this.stopListen()
   }
 
   componentDidMount() {
-    this.stopListener()
+    // this.stopListen()
     // return //DISABLED
     /**@type {firebase.auth.Auth} */
     const auth = this.props.firebase.auth()
     auth.onAuthStateChanged(user => {
       if (user) {
-        this.fetchData()
+        // this.startListen()
       }
 
     })
-    // this.fetchData()
+    // this.startListen()
   }
 
   handleChange = (e) => {
@@ -161,14 +221,18 @@ class RecipeModal extends Component {
 
   handleDiseaseChange = (e) => {
     const diseaseRef = e && e.ref
-    this.setState({ data: { ...this.state.data, diseaseRef }, selectDisease: e && e.value })
+    const diseaseName = e && e.value
+    this.setState({ data: { ...this.state.data, diseaseRef, diseaseName }, selectDisease: e && e.value })
   }
 
   handleSelectHerbalChange = e => {
-    const herbalRefs = e && e.map(item => item.ref)
-    const selectHerbals = e && e.map(item => item.value)
+    const herbals = e && e.map(item => {
+      return { herbalName: item.value, image: item.image, ref: item.ref }
+    })
+    // const herbalRefs = e && e.map(item => item.ref)
+    // const selectHerbals = e && e.map(item => item.value)
     console.log("handleSelectHerbalChange:", e)
-    this.setState({ selectHerbals, data: { ...this.state.data, herbalRefs } }, () => console.log(this.state.selectHerbals))
+    this.setState({ data: { ...this.state.data, herbals } }, () => console.log(this.state.data.herbals))
   }
 
   handleHealChange = e => {
@@ -179,7 +243,7 @@ class RecipeModal extends Component {
   handleSubmit = () => {
     /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
-    const { data, data: { recipeName, heal, description }, updateDocSnapshot } = this.state
+    const { data, updateDocSnapshot } = this.state
 
     /** @type {firebase.User} */
     const user = this.props.authUser
@@ -191,9 +255,9 @@ class RecipeModal extends Component {
 
     const trimed = {
       ...data,
-      recipeName: recipeName.trim(),
-      heal: heal.trim(),
-      description: description.trim(),
+      // recipeName: recipeName,
+      // heal: heal.trim(),
+      // description: description.trim(),
     }
 
     this.setState({ updating: true })
@@ -203,6 +267,16 @@ class RecipeModal extends Component {
         ...trimed,
         modifyAt: firestore.FieldValue.serverTimestamp()
       }).then(() => {
+        // const transaction = firestore.runTransaction(t => {
+        //   t.get(updateDocSnapshot.ref).then(doc => {
+        //     const data = doc.data()
+        //     /**@type {firebase.firestore.DocumentReference} */
+        //     const diseaseRef = data.diseaseRef
+        //     diseaseRef.
+        //       t.update(diseaseRef)
+        //   })
+        // })
+        // firestore.collection('diseases').where('diseaseName', '==')
         this.setState({ showAdd: false, updating: false, })
       })
       return
@@ -225,9 +299,13 @@ class RecipeModal extends Component {
         recipeName: "",
         heal: "",
         description: "",
+        diseaseDescription: "",
+        diseaseImage: "",
+        diseaseName: "",
         diseaseRef: null,
         showPublic: true,
-        herbalRefs: []
+        // herbalRefs: [],
+        herbals: []
       },
       updateDocSnapshot: null,
       selectDisease: "",
@@ -244,8 +322,8 @@ class RecipeModal extends Component {
     const data = recipe.snapshot.data()
     this.setState({
       data,
-      selectDisease: recipe.diseaseName,
-      selectHerbals: recipe.herbalNames,
+      // selectDisease: recipe.diseaseName,
+      // selectHerbals: recipe.herbalNames,
       updateDocSnapshot: recipe.snapshot,
       showAdd: true,
     })
@@ -263,8 +341,34 @@ class RecipeModal extends Component {
     })
   }
 
+  handleNextPage = () => {
+    this.stopListen()
+    const offset = this.state.lastVisible ? this.state.offset + 1 : this.state.offset
+    this.setState({
+      prevDisable: offset < 1,
+      // nextDisable: !this.state.lastVisible,
+      offset
+    }, () => {
+      console.log("offset:", offset)
+      this.startListen()
+    })
+  }
+
+  handlePrevPage = () => {
+    this.stopListen()
+    const offset = this.state.offset > 0 ? this.state.offset - 1 : 0
+    this.setState({
+      prevDisable: offset < 1,
+      // nextDisable: !this.state.lastVisible,
+      offset
+    }, () => {
+      console.log("offset:", this.state.offset)
+      this.startListen(true)
+    })
+  }
+
   render() {
-    const { data, updateDocSnapshot, showAdd, diseases, selectDisease, selectHerbals, recipes, herbals, updating } = this.state
+    const { data, updateDocSnapshot, showAdd, diseases, recipes, herbals, updating, prevDisable, nextDisable, limit, offset } = this.state
     const { onHide } = this.props
 
     const modalTitle = "จัดการข้อมูลตำรับ"
@@ -280,6 +384,12 @@ class RecipeModal extends Component {
       handleAdd={this.handleShowAdd}
       handleEdit={this.handleEdit}
       handleDelete={this.handleDelete}
+      limit={limit}
+      offset={offset}
+      onNextPage={this.handleNextPage}
+      onPrevPage={this.handlePrevPage}
+      prevDisable={prevDisable}
+      nextDisable={nextDisable}
     />
 
     const subtitle = updateDocSnapshot ? "แก้ไขข้อมูลตำรับ" : "เพิ่มข้อมูลตำรับ"
@@ -294,8 +404,8 @@ class RecipeModal extends Component {
         data={data}
         herbals={herbals}
         diseases={diseases}
-        selectDisease={selectDisease}
-        selectHerbals={selectHerbals}
+        selectDisease={data.diseaseName}
+        selectHerbals={data.herbals}
         onChange={this.handleChange}
         handleShowPublicChange={this.handleShowPublicChange}
         handleDiseaseChange={this.handleDiseaseChange}
@@ -319,19 +429,24 @@ class RecipeModal extends Component {
   }
 }
 
-const RecipeList = ({ recipes, handleAdd, handleEdit, handleDelete }) =>
-  <Fragment>
+const RecipeList = ({ recipes, handleAdd, handleEdit, prevDisable, nextDisable, handleDelete, onNextPage, onPrevPage, limit, offset }) =>
+  <>
     <div className="mb-1 text-right">
-      <Button variant="success" onClick={handleAdd}><FaPlus /></Button>
+      <Button variant="success" size="sm" onClick={handleAdd}><FaPlusCircle /></Button>{" "}
+      <ButtonGroup>
+        <Button variant="outline-secondary" size="sm" disabled={prevDisable} onClick={onPrevPage} ><FaChevronLeft /></Button>
+        <Button variant="outline-secondary" size="sm" disabled={nextDisable} onClick={onNextPage} ><FaChevronRight /></Button>
+      </ButtonGroup>
+
     </div>
     <div style={{ height: "40rem", overflowY: "auto" }}>
       <Table bordered striped size="sm" responsive hover >
         <thead>
           <tr>
             <th className="text-center" style={{ width: "5%" }}>#</th>
-            <th>รักษาโรค</th>
-            <th>ชื่อตำรับ</th>
-            <th>วิธีการ</th>
+            <th style={{ minWidth: "5rem" }}>รักษาโรค</th>
+            <th style={{ minWidth: "5rem" }}>ชื่อตำรับ</th>
+            <th style={{ minWidth: "5rem" }}>วิธีการ</th>
             <th>สมุนไพร</th>
             <th className="text-center" style={{ width: "5%" }}><FaEye /></th>
             <th className="text-center" style={{ width: "10%" }}><FaTools /></th>
@@ -343,11 +458,11 @@ const RecipeList = ({ recipes, handleAdd, handleEdit, handleDelete }) =>
             const data = recipe.snapshot.data()
             // console.log("recipe", recipe)
             return <tr key={`recipe-${index}`}>
-              <td className="text-center">{index + 1}</td>
+              <td className="text-center">{(index + 1) + (limit * offset)}</td>
               <td>{recipe.diseaseName}</td>
-              <td>{data.recipeName}</td>
+              <td>{(data.recipeName || "")}</td>
               <td>{data.heal}</td>
-              <td><p className="td-fixed-content">{recipe.herbalNames && recipe.herbalNames.join(", ")}</p></td>
+              <td><span className="td-fixed-content">{recipe.herbals && recipe.herbals.map(herbal => herbal.herbalName).join(", ")}</span></td>
               <td className="text-center">{data.showPublic ? <FaEye /> : <FaEyeSlash />}</td>
               <td >
                 <div style={{ alignSelf: "center" }} className="text-center">
@@ -362,9 +477,9 @@ const RecipeList = ({ recipes, handleAdd, handleEdit, handleDelete }) =>
         </tbody>
       </Table>
     </div>
-  </Fragment>
+  </>
 
-const RecipeForm = ({ data: { recipeName, description, showPublic, heal }, selectDisease, selectHerbals, diseases, herbals, onChange, handleShowPublicChange, handleDiseaseChange, onSelectHerbalChange, handleHealChange }) =>
+const RecipeForm = ({ data: { recipeName, description, diseaseName, showPublic, heal, herbals: selectHerbals }, diseases, herbals, onChange, handleShowPublicChange, handleDiseaseChange, onSelectHerbalChange, handleHealChange }) =>
 
   <Form autoComplete="off">
     <Form.Group as={Row}>
@@ -384,7 +499,7 @@ const RecipeForm = ({ data: { recipeName, description, showPublic, heal }, selec
           isClearable={true}
           backspaceRemovesValue={false}
           options={diseases}
-          value={diseases.filter(option => option.value === selectDisease)}
+          value={diseases.filter(option => option.value === diseaseName)}
           name="diseases"
           onChange={handleDiseaseChange}
         />
@@ -420,14 +535,14 @@ const RecipeForm = ({ data: { recipeName, description, showPublic, heal }, selec
       <Form.Label column sm="2">สมุนไพร</Form.Label>
       <Col sm="10">
         <Select
-          closeMenuOnSelect={false}
+          // closeMenuOnSelect={false}
           placeholder="เลือกสมุนไพร"
           noOptionsMessage={() => "ไม่มีตัวเลือก"}
           loadingMessage={() => "กำลังโหลด"}
           isClearable={true}
           backspaceRemovesValue={false}
           options={herbals}
-          defaultValue={herbals.filter(h => selectHerbals && selectHerbals.includes(h.value))}
+          defaultValue={herbals.filter(h => selectHerbals && selectHerbals.map(item => item.herbalName).includes(h.value))}
           name="herbals_select"
           onChange={onSelectHerbalChange}
           isMulti

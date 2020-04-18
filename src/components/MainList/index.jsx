@@ -16,143 +16,195 @@ const showItems = [
   { name: "สมุนไพร", ref: "รักษาโรค" }
 ]
 
-// let images_path = storageConfig.disease_images_path
+let recipesListener = null
 export class MainList extends Component {
   state = {
     diseaseModal: false,
     herbalModal: false,
     recipeModal: false,
     showBy: "โรค",
-    // linkPrefix: "ตำหรับ",
-    // true,
-    // listData: {}
+    /**@type {firebase.firestore.QueryDocumentSnapshot[]} */
+    recipes: [],
+    diseases: {}
   }
 
-  /**@param {firebase.firestore.QuerySnapshot} recipesSnap */
-  processHerbals = (recipesSnap) => {
+  processHerbals = () => {
+    // if (Object.keys(this.state.diseases).length === 0) return
     this.props.doFetch()
-    // console.log("processData")
+    console.log("processHerbals")
     let listData = {}
-    this.setState({ listData })
-    if (recipesSnap.empty) return
-    const recipesFetch = []
-    const herbalsFetch = []
-    recipesSnap.forEach((recipeSnap) => {
+    const firestore = this.props.firestore
+    // const batch = firestore.batch()
+
+    // const recipesFetch = []
+    // const herbalsFetch = []
+    this.state.recipes.forEach(recipeSnap => {
       if (recipeSnap.exists) {
         const recipeData = recipeSnap.data()
-        /**@type {firebase.firestore.DocumentReference[]} */
-        const herbalRefs = recipeData.herbalRefs
-        /**@type {firebase.firestore.DocumentReference} */
-        const diseaseRef = recipeData.diseaseRef
 
-        const herbalsDocsFetch = herbalRefs.map(herbalRef => herbalRef.get())
-        const b = diseaseRef.get().then((diseaseDoc) => {
-          if (diseaseDoc.exists) {
-            const { diseaseName } = diseaseDoc.data()
-
-            const a = Promise.all(herbalsDocsFetch).then(herbalDocs => {
-              herbalDocs.forEach((herbalDoc) => {
-                const herbalData = herbalDoc.data()
-                const recipes = { ...(listData[herbalData.herbalName] && listData[herbalData.herbalName].recipes), [recipeSnap.id]: { ...recipeData, diseaseName } }
-                listData[herbalData.herbalName] = { ...herbalData, recipes }
-              })
-            })
-            // console.log("each")
-            herbalsFetch.push(a)
-          }
+        recipeData.herbals && recipeData.herbals.forEach(herbal => {
+          const recipes = { ...(listData[herbal.herbalName] && listData[herbal.herbalName].recipes), [recipeSnap.id]: { ...recipeData } }
+          listData[herbal.herbalName] = { ...herbal, recipes }
         })
-        recipesFetch.push(b)
+
+
+
+
+        // /**@type {firebase.firestore.DocumentReference[]} */
+        // const herbalRefs = recipeData.herbalRefs
+
+
+        // if (herbalRefs) {
+        //   const herbalsDocsFetch = herbalRefs.map(herbalRef => herbalRef.get())
+        //   const a = Promise.all(herbalsDocsFetch).then(herbalDocs => {
+
+        //     const herbals = herbalDocs && herbalDocs.map(doc => {
+        //       const { herbalName, image, description } = doc.data()
+        //       return { herbalName, image, description, ref: doc.ref }
+        //     })
+        //     console.log("tranform herbals:", herbals)
+        //     batch.update(recipeSnap.ref, { herbals, showPublic: true })
+
+
+        //   })
+        //   herbalsFetch.push(a)
+        // }
+
+
       }
     })
-    Promise.all([...herbalsFetch, ...recipesFetch]).then(() => {
-      this.props.doneFetch(listData)
+    this.setState({
+      diseases: listData
     })
+    this.props.doneFetch(listData)
+
+
+
+    // // /** @type {firebase.firestore.Firestore} */
+    // // const firestore = this.props.firestore
+    // const batch = firestore.batch()
+    // const herbalsRecipeCol = firestore.collection("herbalsRecipe")
+    // Object.entries(listData).forEach(([k, v]) => {
+    //   // console.log(item)
+    //   const herbalsRecipeRef = herbalsRecipeCol.doc()
+    //   batch.set(herbalsRecipeRef, { herbalName: k, ...v }, { merge: true })
+    // })
+    // batch.commit()
   }
 
-  /**@param {firebase.firestore.QuerySnapshot} recipesSnap */
-  processDiseases = (recipesSnap) => {
+  processDiseases = () => {
     this.props.doFetch()
     let listData = {}
-    this.setState({ listData })
-    if (recipesSnap.empty) return
-    const fetchList = []
-    recipesSnap.forEach((recipeSnap) => {
+    /**@type {firebase.firestore.Firestore} */
+    const firestore = this.props.firestore
+    // const batch = firestore.batch()
+    // const fetchList = []
+    // const fetchList1 = []
+    this.state.recipes.forEach((recipeSnap) => {
       if (recipeSnap.exists) {
         const recipeData = recipeSnap.data()
-        /**@type {firebase.firestore.DocumentReference} */
-        const diseaseRef = recipeData.diseaseRef
-        const a = diseaseRef.get().then((diseaseDoc) => {
-          if (diseaseDoc.exists) {
-            const diseaseData = diseaseDoc.data()
-            if (!diseaseData.showPublic) return
-            const recipes = { ...(listData[diseaseData.diseaseName] && listData[diseaseData.diseaseName].recipes), [recipeSnap.id]: { ...recipeData } }
-            listData[diseaseData.diseaseName] = { ...diseaseData, recipes }
-          }
-        })
+        const diseaseData = { diseaseName: recipeData.diseaseName, image: recipeData.diseaseImage, description: recipeData.diseaseDescription }
+        const recipes = { ...(listData[recipeData.diseaseName] && listData[recipeData.diseaseName].recipes), [recipeSnap.id]: { ...recipeData, recipeRef: recipeSnap.ref } }
+        listData[recipeData.diseaseName] = { ...diseaseData, diseaseRef: recipeData.diseaseRef, recipes }
+
+        // /**@type {firebase.firestore.DocumentReference} */
+        // const b = firestore.collection('diseases').where('diseaseName', '==', recipeData.diseaseName).get().then((result) => {
+        //   if (!result.empty) {
+
+        //     // const a = result.docs[0].get().then((diseaseDoc) => {
+        //     //   if (diseaseDoc.exists) {
+        //     //     // const diseaseData = diseaseDoc.data()
+        //     //     // if (!diseaseData.showPublic) return
+        //     //     // const recipes = { ...(listData[diseaseData.diseaseName] && listData[diseaseData.diseaseName].recipes), [recipeSnap.id]: { ...recipeData } }
+        //     //     // listData[diseaseData.diseaseName] = { ...diseaseData, recipes }
+        //     //     batch.update(recipeSnap.ref, { diseaseRef: result.docs[0].ref, showPublic: true })
+        //     //   }
+        //     // })
+        //     // fetchList.push(a)
+        //   }
+        // })
+
+        // const b = 
+        // fetchList1.push(b)
         // console.log("each")
-        fetchList.push(a)
+
       }
     })
-    Promise.all(fetchList).then(() => {
-      this.props.doneFetch(listData)
+    // Object.entries(listData).forEach(([k, v]) => {
+    //   console.log(v)
+    //   const recipes = Object.entries(v.recipes).map(([k, v]) => {
+
+    //     return { recipeName: v.recipeName || "", recipeRef: v.recipeRef }
+    //   })
+    //   // console.log(recipes)
+    //   batch.update(v.diseaseRef, { recipes })
+    // })
+
+    // Promise.all(fetchList1).then(() => {
+    // Promise.all(fetchList).then(() => {
+    // batch.commit()
+    // })
+    // })
+    this.setState({
+      diseases: listData
     })
+    // /** @type {firebase.firestore.Firestore} */
+    // const firestore = this.props.firestore
+    // const batch = firestore.batch()
+    // const diseasesRecipeCol = firestore.collection("diseasesRecipe")
+    // Object.entries(listData).forEach(([k, v]) => {
+    //   // console.log(item)
+    //   const diseasesRecipeRef = diseasesRecipeCol.doc()
+    //   batch.set(diseasesRecipeRef, { diseaseName: k, ...v }, { merge: true })
+    // })
+
+    this.props.doneFetch(listData)
   }
 
-  processData = data => {
-    const { showBy } = this.state
+  processData = () => {
+    const { showBy, recipes } = this.state
+    console.log("processData recipes length:", recipes.length)
+    if (showBy === "โรค") {
+      return this.processDiseases()
+    }
+    this.processHerbals()
+  }
 
-    if (!data) {
-      /**@type {firebase.firestore.Firestore} */
-      const firestore = this.props.firestore
-      return firestore.collection('recipes').where('showPublic', '==', true).get().then(data => {
-        if (showBy === "โรค") {
-          return this.processDiseases(data)
-        }
-        this.processHerbals(data)
+  startListen = () => {
+    /**@type {firebase.firestore.Firestore} */
+    const firestore = this.props.firestore
+    const recipesRef = firestore.collection('recipes')//.where('showPublic', '==', true).limit(50)
+    if (!recipesListener) {
+      console.log("Start listening")
+      recipesListener = recipesRef.onSnapshot(recipesSnap => {
+        console.log("onSnapshot")
+        this.setState({
+          recipes: recipesSnap.docs
+        }, this.processData)
+      }, (error) => {
+        console.warn(error)
       })
     }
-
-    if (showBy === "โรค") {
-      return this.processDiseases(data)
-    }
-    this.processHerbals(data)
   }
 
   componentDidMount() {
+    console.log("componentDidMount")
     const key = localStorage.getItem("showBy")
     if (key) {
       this.setState({
         showBy: showItems[key].name,
       })
-      // images_path = showItems[key].name === "โรค" ? storageConfig.disease_images_path : storageConfig.herbal_images_path
     }
-
 
     /**@type {firebase.auth.Auth} */
     const auth = this.props.firebase.auth()
 
-    /**@type {firebase.firestore.Firestore} */
-    const firestore = this.props.firestore
-
-    const recipesRef = firestore.collection('recipes').where('showPublic', '==', true)
-    let unsub
-    auth.onAuthStateChanged(authUser => {
-      if (!unsub) {
-        unsub = recipesRef.onSnapshot(recipesSnap => {
-          this.processData(recipesSnap)
-        }, (error) => {
-
-        })
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        this.startListen()
       }
+
     })
-
-    if (!unsub) {
-      unsub = recipesRef.onSnapshot(recipesSnap => {
-        this.processData(recipesSnap)
-      }, (error) => {
-
-      })
-    }
   }
 
   handleHideDiseaseModal = () => {
@@ -192,16 +244,9 @@ export class MainList extends Component {
     })
   }
 
-  // handleAddRecipeOrDisease = () => {
-  //   if (this.state.showBy === "สมุนไพร") {
-  //     return this.handleAddDisease()
-  //   }
-  // }
-
   handleShowBySelect = (eventKey) => {
     const { showBy } = this.state
     if (showBy !== showItems[eventKey].name) {
-      // images_path = showItems[eventKey].name === "โรค" ? storageConfig.disease_images_path : storageConfig.herbal_images_path
       this.setState({
         showBy: showItems[eventKey].name,
       }, () => {
@@ -212,24 +257,49 @@ export class MainList extends Component {
   }
 
   handleImageClick = e => {
-    const path = e.target.dataset.path
-    const data = this.state.listData[path]
-    // console.log()
-    this.props.showFullView(path, `${data}`)
+    // const path = e.target.dataset.path
+    // const data = this.state.listData[path]
+    // // console.log()
+    // this.props.showFullView(path, data)
+  }
+
+  /**@param {firebase.firestore.DocumentReference[]} herbals */
+  fetchHerbals = (herbals) => {
+    this.props.fullViewHerbalsFetch()
+    // console
+    const herbalsFetch = herbals.map(herbal => herbal.ref.get())
+
+    Promise.all(herbalsFetch).then(result => {
+      const herbals = result.map(item => {
+        // console.log(item)
+        const { herbalName, image } = item.data()
+        return {
+          herbalName,
+          image: image && getDownloadUrl(storageConfig.herbal_images_path, image)
+        }
+      })
+      this.props.fullViewHerbals(herbals)
+    })
   }
 
   handleSubClick = e => {
     const parent = e.target.dataset.parent
     const uid = e.target.dataset.uid
-    const data = this.state.listData[parent].recipes[uid]
+    const data = this.state.diseases[parent].recipes[uid]
+    const name = e.target.dataset.name
+    const description1 = this.state.diseases[parent].description
+    if (!data) return
     // console.log(e.target.dataset.parent)
     // console.log(this.state.listData[parent])
-    this.props.showFullView(parent, `${data}`)
+    this.fetchHerbals(data.herbals)
+    console.log(data)
+    this.props.showFullView(`${parent} ${name}`, { ...data, description1 })
   }
 
   render() {
+    // console.log(this.state.diseases)
     const { diseaseModal, herbalModal, recipeModal, showBy } = this.state
-    const result = this.props.status === "searchdone" ? this.props.searchResult : this.props.result
+    const result = this.props.status === "searchdone" ? this.props.searchResult : this.state.diseases
     return (
       <Container fluid>
         {this.props.authUser ? <Row className="justify-content-md-center mb-3">
@@ -247,7 +317,7 @@ export class MainList extends Component {
 
         {this.props.searchResult || this.props.status === "searching" ? null : <div className="filter-item">
           <Row>
-            <Col className="" style={{ display: "flex" }} sm={3}>
+            <Col className="mb-3" style={{ display: "flex" }} sm={5}>
               <div className="mr-2" style={{ alignSelf: "center" }}>แสดงตาม</div>
               <Dropdown>
                 <Dropdown.Toggle variant="outline-secondary" size="sm">
@@ -277,17 +347,18 @@ export class MainList extends Component {
                 <ul className="list-unstyled">
 
                   {Object.entries(result).length > 0 ? Object.entries(result).map(([k, item], i) => {
-                    const images_path = item.diseaseName ? storageConfig.disease_images_path : storageConfig.herbal_images_path
+                    const images_path = (showBy === "โรค") ? storageConfig.disease_images_path : storageConfig.herbal_images_path
                     return <MediaItem
+                      showBy={showBy}
                       key={`media-${i}`}
                       uid={`media-${i}`}
-                      prefix={item.diseaseName ? "ตำรับ" : "รักษา"}
-                      title={item.diseaseName || item.herbalName}
+                      prefix={showBy === "โรค" ? "ตำรับ" : "รักษา"}
+                      title={showBy === "โรค" ? (item.diseaseName && "โรค" + item.diseaseName) : item.herbalName}
                       content={item.description}
                       data={item.recipes}
                       path={k}
                       image={item.image ? getDownloadUrl(images_path, item.image) : `holder.js/400x400?text=ไม่มีภาพ`}
-                      hidden={!item.showPublic}
+                      // hidden={!item.showPublic}
                       onImageClick={this.handleImageClick}
                       onSubClick={this.handleSubClick}
                     />
@@ -331,6 +402,10 @@ const mapDispatchToProps = dispatch => ({
     dispatch({ type: 'DONE_FETCH', result }),
   showFullView: (title, body) =>
     dispatch({ type: 'SHOW_FULLVIEW', title, body }),
+  fullViewHerbals: (herbals) =>
+    dispatch({ type: 'FULLVIEW_HERBAL', herbals }),
+  fullViewHerbalsFetch: () =>
+    dispatch({ type: 'FULLVIEW_HERBAL_FETCH' }),
 });
 
 export default compose(

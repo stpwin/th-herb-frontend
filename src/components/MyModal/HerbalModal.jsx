@@ -37,10 +37,19 @@ class HerbalModal extends Component {
     }
   }
 
-  fetchData = () => {
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.show && !herbalsListener) {
+      this.startListen()
+    } else if (!nextProps.show) {
+      this.stopListen()
+    }
+
+  }
+
+  startListen = () => {
     /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
-    console.log("start listening")
+    console.log("startListen")
     if (herbalsListener) return
     herbalsListener = firestore.collection('herbals').orderBy('createdAt').onSnapshot(({ docs: herbals }) => {
       this.setState({
@@ -51,26 +60,26 @@ class HerbalModal extends Component {
     })
   }
 
-  stopListener = () => {
+  stopListen = () => {
     if (herbalsListener) {
-      console.log("stop herbals listener")
+      console.log("stopListen")
       herbalsListener()
     }
   }
 
   componentWillUnmount() {
-    this.stopListener()
+    this.stopListen()
   }
 
   componentDidMount() {
-    this.stopListener()
+    // this.stopListen()
     // return //DISABLED
     Holder.run({ images: ".image-preview" })
     /**@type {firebase.auth.Auth} */
     const auth = this.props.firebase.auth()
     auth.onAuthStateChanged(user => {
       if (user) {
-        this.fetchData()
+        // this.startListen()
       }
     })
     // this.fetchData()

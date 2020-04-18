@@ -34,9 +34,12 @@ export default function initFirebase(initialState, history) {
         ssl: false
       })
     }
-    // else {
-    //   firebase.firestore()
-    // }
+    else {
+      firebase.firestore().settings({
+        cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
+      });
+      firebase.firestore().enablePersistence()
+    }
     firebaseInstance = firebase
   }
 
