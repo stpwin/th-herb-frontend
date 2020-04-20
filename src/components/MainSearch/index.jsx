@@ -7,106 +7,23 @@ import { Jumbotron, InputGroup, FormControl, Container, Row, Col } from "react-b
 import { FaSearch } from "react-icons/fa"
 
 let delayType;
+const limit = 10
 export class MainSearch extends Component {
 
   search = (text) => {
-    this.props.doSearch()
+    // this.props.doSearch()
     /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
-
-    const fetchList = []
-    const diseaseFetchList = []
-    let listData = {}
-
-    const recipesRef = firestore.collection('recipes')
-    const diseasesFetch = firestore.collection('diseases').orderBy('diseaseName').orderBy('createdAt').where('showPublic', '==', true).startAt(text).endAt(text + '\uf8ff').get().then(snapshot => {
-      // console.log("diseases", snapshot.size)
-      // console.log(snapshot.docs)
-
-      snapshot.docs.forEach((diseaseSnap) => {
-        const diseaseFetch = diseaseSnap.ref.get().then(doc => {
-          const diseaseData = doc.data()
-          // console.log(diseaseData)
-
-          return recipesRef.where('diseaseRef', '==', diseaseSnap.ref).where('showPublic', '==', true).get().then(recipeSnaps => {
-            // console.log('recipes', recipeSnaps.size)
-
-            recipeSnaps.forEach(recipeDoc => {
-              const recipeData = recipeDoc.data()
-              const recipes = { ...(listData[diseaseData.diseaseName] && listData[diseaseData.diseaseName].recipes), [recipeDoc.id]: { ...recipeData } }
-              listData[diseaseData.diseaseName] = { ...diseaseData, recipes }
-
-            })
-
-
-          }).catch(err => {
-            console.warn(err)
-          })
-          // fetchList.push(recipesFetch)
-        }).catch(err => {
-          console.warn(err)
-        })
-        fetchList.push(diseaseFetch)
-      })
-    }).catch(err => {
-      console.warn(err)
-    })
-
-    const herbalsFetch = firestore.collection('herbals').orderBy('herbalName').orderBy('createdAt').startAt(text).endAt(text + '\uf8ff').where('showPublic', '==', true).get().then(snapshot => {
-      // console.log("herbals", snapshot.size)
-      // console.log(snapshot.docs)
-      snapshot.docs.forEach((herbalDoc) => {
-        const herbalFetch = herbalDoc.ref.get().then(herbalSnap => {
-          const herbalData = herbalSnap.data()
-
-          return recipesRef.where('herbalRefs', 'array-contains', herbalDoc.ref).where('showPublic', '==', true).get().then(recipeSnaps => {
-            recipeSnaps.forEach(recipeDoc => {
-              const recipeData = recipeDoc.data()
-              const diseaseRef = recipeData.diseaseRef
-
-              const b = diseaseRef.get().then((diseaseDoc) => {
-                if (diseaseDoc.exists) {
-                  const { diseaseName } = diseaseDoc.data()
-                  // console.log(diseaseName)
-                  const recipes = { ...(listData[herbalData.herbalName] && listData[herbalData.herbalName].recipes), [recipeDoc.id]: { ...recipeData, diseaseName } }
-                  listData[herbalData.herbalName] = { ...herbalData, recipes }
-                }
-              })
-              diseaseFetchList.push(b)
-            })
-
-            // console.log('recipes', recipeSnaps.size)
-          }).catch(err => {
-            console.warn(err)
-          })
-
-        })
-
-        fetchList.push(herbalFetch)
-      })
-    }).catch(err => {
-      console.warn(err)
-    })
-    // fetchList.push(diseasesFetch)
-    // fetchList.push(herbalsFetch)
-
-    Promise.all([diseasesFetch, herbalsFetch]).then(() => {
-      Promise.all(fetchList).then(() => {
-        Promise.all(diseaseFetchList).then(() => {
-          console.log("ALL done")
-          // console.log(listData)
-          this.props.doneSearch(listData)
-        })
-
-      })
-
+    const diseasesFetch = firestore.collection('diseases').orderBy('diseaseName').orderBy('createdAt').startAt(text).endAt(text + '\uf8ff').where('showPublic', '==', true).limit(limit).get()
+    const herbalsFetch = firestore.collection('herbals').orderBy('herbalName').orderBy('createdAt').startAt(text).endAt(text + '\uf8ff').where('showPublic', '==', true).limit(limit).get()
+    Promise.all([herbalsFetch, diseasesFetch]).then(([herbalSnap, diseaseSnap]) => {
+      this.props.doneSearch(herbalSnap.docs, diseaseSnap.docs)
     })
   }
 
-
-
   handleSearch = e => {
     if (e.target.value.length > 2) {
+      this.props.doSearch()
       const value = e.target.value
       clearTimeout(delayType)
       delayType = setTimeout(() => {
@@ -155,8 +72,8 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
   doSearch: () =>
     dispatch({ type: 'DO_SEARCH' }),
-  doneSearch: (result) =>
-    dispatch({ type: 'DONE_SEARCH', result }),
+  doneSearch: (herbalResult, diseaseResult) =>
+    dispatch({ type: 'DONE_SEARCH', herbalResult, diseaseResult }),
   clearSearch: () =>
     dispatch({ type: 'CLEAR_SEARCH' }),
 });

@@ -15,11 +15,11 @@ export class HerbalMedia extends Component {
       className: "image-herbal"
     })
   }
-  
+
   render() {
     return (
       <Media>
-        <Image width="100" className="image-herbal" src={this.props.image || "holder.js/100x100"}></Image>
+        <Image width="100" className="image-herbal" src={this.props.image || "holder.js/100x100?text=ไม่มีรูป"}></Image>
         <Media.Body>
           {/* <h5>Media Heading</h5> */}
           <p>

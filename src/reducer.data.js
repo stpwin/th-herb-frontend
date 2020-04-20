@@ -1,7 +1,8 @@
 const INITIAL_STATE = {
   // text: "",
   result: null,
-  searchResult: null,
+  herbalResult: [],
+  diseaseResult: [],
   status: "fetching",
 };
 
@@ -10,6 +11,13 @@ const applyData = (state, action) => ({
   // text: action.text,
   result: null,
   status: "fetching"
+});
+
+const applyFetchMore = (state, action) => ({
+  ...state,
+  // text: action.text,
+  result: null,
+  status: "more-fetching"
 });
 
 const applyDataDone = (state, action) => ({
@@ -21,20 +29,23 @@ const applyDataDone = (state, action) => ({
 const applySearch = (state, action) => ({
   ...state,
   // result: null,
-  searchResult: null,
+  herbalResult: [],
+  diseaseResult: [],
   status: "searching"
 });
 
 const applyClearSearch = (state, action) => ({
   ...state,
   // result: null,
-  searchResult: null,
+  herbalResult: [],
+  diseaseResult: [],
   status: "done"
 });
 
 const applySearchDone = (state, action) => ({
   ...state,
-  searchResult: state.status !== 'done' ? action.result : null,
+  herbalResult: state.status !== 'done' ? action.herbalResult : [],
+  diseaseResult: state.status !== 'done' ? action.diseaseResult : [],
   status: state.status !== 'done' ? "searchdone" : "done"
 });
 
@@ -43,6 +54,10 @@ export function dataReducer(state = INITIAL_STATE, action) {
     case 'DO_FETCH': {
       console.log(action.type)
       return applyData(state, action);
+    }
+    case 'DO_FETCH_MORE': {
+      console.log(action.type)
+      return applyFetchMore(state, action);
     }
     case 'DONE_FETCH': {
       console.log(action.type)

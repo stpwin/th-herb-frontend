@@ -3,6 +3,7 @@ const INITIAL_STATE = {
   showDisease: false,
   showHerbal: false,
   showRecipe: false,
+  herbalView: false,
   title: "",
   body: "",
   herbals: [],
@@ -15,7 +16,8 @@ const applyShowFullView = (state, action) => ({
   ...state,
   title: action.title,
   body: action.body,
-  showFullView: true
+  showFullView: true,
+  herbalView: action.herbalView
 });
 
 const applyHideFullView = (state, action) => ({

@@ -37,6 +37,7 @@
   overflow: auto;
   max-height: 11rem;
   margin-bottom: 2vh;
+  min-height: 80px;
   /* overflow: hidden; */
 }
 
@@ -52,9 +53,9 @@
 }
 
 .media {
-    margin-right: 1rem;
+  margin-right: 1rem;
 }
 
 .media-body {
-    align-self: center;
+  align-self: center;
 }
