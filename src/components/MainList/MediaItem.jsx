@@ -60,10 +60,12 @@ export default class MediaItem extends Component {
               </Row>
               <Row>
                 <Col><div className="list-sub-button">
-                  {(this.props.data && Object.entries(this.props.data).length > 0 && Object.entries(this.props.data).map(([k, v], index) => {
-                    const name = (this.props.showBy === "โรค") ? `${this.props.prefix}ที่ ${index + 1} ${v.recipeName || ""}` : `${this.props.prefix}${v.diseaseName}`
-                    return <Button key={`${this.props.uid}-${index}`} variant="success" className="mr-2 mb-1 custom-button" data-parent={this.props.path} data-uid={k} data-name={name} onClick={this.props.onSubClick}>{name}</Button>
-                  })) || <span className="mr-1">ไม่พบข้อมูล{this.props.prefix}</span>}
+                  {(this.props.subItems && this.props.subItems.length > 0 && this.props.subItems.map((item, index) => {
+                    const counter = this.props.showSubIndex ? `ที่ ${index + 1}` : ""
+                    const name = `${this.props.prefix}${counter} ${item.recipeName}`
+                    // const name = (this.props.showBy === "โรค") ? `${this.props.prefix}ที่ ${index + 1} ${item.recipeName || ""}` : `${this.props.prefix}${item.diseaseName}`
+                    return <Button key={`${this.props.uid}-${index}`} variant="success" className="mr-2 mb-1 custom-button" onClick={() => this.props.onSubClick(this.props.title, name, this.props.snapRef, item.recipeRef, index)}>{name}</Button>
+                  })) || this.props.showMoreInfoButton ? <Button key={`${this.props.uid}-more`} variant="success" className="mr-2 mb-1 custom-button" onClick={() => this.props.onSubClick(this.props.title, this.props.snapRef)}>แสดงเพิ่มเติม</Button> : <span className="mr-1">ไม่พบข้อมูล{this.props.prefix}</span>}
                 </div>
                 </Col>
               </Row>

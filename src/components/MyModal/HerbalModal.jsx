@@ -75,14 +75,6 @@ class HerbalModal extends Component {
     // this.stopListen()
     // return //DISABLED
     Holder.run({ images: ".image-preview" })
-    /**@type {firebase.auth.Auth} */
-    const auth = this.props.firebase.auth()
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        // this.startListen()
-      }
-    })
-    // this.fetchData()
   }
 
   componentDidUpdate() {
@@ -143,7 +135,8 @@ class HerbalModal extends Component {
   handleSubmit = () => {
     /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
-    const { data, data: { herbalName, scientificName, nativeName, description }, updateDocSnapshot } = this.state
+    const batch = firestore.batch()
+    const { data, data: { herbalName, scientificName, nativeName, description, image }, updateDocSnapshot } = this.state
 
     /** @type {firebase.User} */
     const user = this.props.authUser
@@ -163,12 +156,36 @@ class HerbalModal extends Component {
     // console.log(trimed)
     this.setState({ updating: true })
     if (updateDocSnapshot) {
-      updateDocSnapshot.ref.update({
+
+      batch.update(updateDocSnapshot.ref, {
         ...trimed,
         modifyAt: firestore.FieldValue.serverTimestamp()
-      }).then(() => {
-        this.setState({ showAdd: false, updating: false, })
       })
+      firestore.collection('recipes').where('herbalRefs', 'array-contains', updateDocSnapshot.ref).get().then(docList => {
+        docList.docs.forEach(doc => {
+          /**@type {Array} */
+          let herbals = doc.data().herbals
+
+          const herbalFound = herbals.findIndex(herbal => herbal.ref.id === updateDocSnapshot.ref.id)
+          if (herbalFound > -1) {
+            herbals[herbalFound] = { herbalName, image, ref: updateDocSnapshot.ref }
+          }
+          // console.log(doc.id, herbals)
+          batch.set(doc.ref, { herbals }, { merge: true })
+        })
+      }).then(() => {
+        batch.commit().then(() => {
+          this.setState({ showAdd: false, updating: false, })
+        })
+      })
+
+      // updateDocSnapshot.ref.update({
+      //   ...trimed,
+      //   modifyAt: firestore.FieldValue.serverTimestamp()
+      // }).then(() => {
+      //   this.setState({ showAdd: false, updating: false, })
+      // })
+
       return
     }
 
@@ -180,7 +197,8 @@ class HerbalModal extends Component {
       return collectionRef.add({
         ...trimed,
         owner: user.uid,
-        createdAt: firestore.FieldValue.serverTimestamp()
+        createdAt: firestore.FieldValue.serverTimestamp(),
+        modifyAt: firestore.FieldValue.serverTimestamp()
       })
     }).then(result => {
       console.log("herbal added", result)

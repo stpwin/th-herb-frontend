@@ -149,6 +149,7 @@ class DiseaseModal extends Component {
   handleSubmit = () => {
     /** @type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
+    const batch = firestore.batch()
     /** @type {firebase.User} */
     const user = this.props.authUser
     if (!user) {
@@ -156,7 +157,7 @@ class DiseaseModal extends Component {
       this.props.showLogin()
       return
     }
-    const { data, data: { diseaseName, description }, updateDocSnapshot } = this.state
+    const { data, data: { diseaseName, description, image }, updateDocSnapshot } = this.state
     this.setState({ updating: true })
 
     const trimed = {
@@ -166,13 +167,29 @@ class DiseaseModal extends Component {
     }
 
     if (updateDocSnapshot) {
-      updateDocSnapshot.ref.update({
+
+      batch.update(updateDocSnapshot.ref, {
         ...trimed,
-        // owner: user.uid,
         modifyAt: firestore.FieldValue.serverTimestamp()
-      }).then(() => {
-        this.setState({ showAdd: false, updating: false, })
       })
+      firestore.collection('recipes').where('diseaseRef', '==', updateDocSnapshot.ref).get().then(docList => {
+        docList.docs.forEach(doc => {
+          batch.set(doc.ref, { diseaseName, diseaseDescription: description, diseaseImage: image }, { merge: true })
+        })
+      }).then(() => {
+        batch.commit().then(() => {
+          this.setState({ showAdd: false, updating: false, })
+        })
+      })
+
+
+      // updateDocSnapshot.ref.update({
+      //   ...trimed,
+      //   // owner: user.uid,
+      //   modifyAt: firestore.FieldValue.serverTimestamp()
+      // }).then(() => {
+      //   this.setState({ showAdd: false, updating: false, })
+      // })
       return
     }
 
@@ -184,7 +201,8 @@ class DiseaseModal extends Component {
       return collectionRef.add({
         ...trimed,
         owner: user.uid,
-        createdAt: firestore.FieldValue.serverTimestamp()
+        createdAt: firestore.FieldValue.serverTimestamp(),
+        modifyAt: firestore.FieldValue.serverTimestamp()
       })
     }).then(result => {
       console.log("disease added", result)

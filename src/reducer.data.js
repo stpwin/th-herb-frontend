@@ -2,7 +2,7 @@ const INITIAL_STATE = {
   // text: "",
   result: null,
   searchResult: null,
-  status: "",
+  status: "fetching",
 };
 
 const applyData = (state, action) => ({

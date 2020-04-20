@@ -6,7 +6,9 @@ const INITIAL_STATE = {
   title: "",
   body: "",
   herbals: [],
-  herbalsStatus: "fetching"
+  recipe: "",
+  herbalsStatus: "fetching",
+  recipeStatus: "fetching",
 };
 
 const applyShowFullView = (state, action) => ({
@@ -18,6 +20,12 @@ const applyShowFullView = (state, action) => ({
 
 const applyHideFullView = (state, action) => ({
   ...state,
+  title: "",
+  body: "",
+  herbals: [],
+  recipe: "",
+  herbalsStatus: "fetching",
+  recipeStatus: "fetching",
   showFullView: false
 });
 
@@ -32,6 +40,22 @@ const applyHerbals = (state, action) => ({
   herbals: action.herbals,
   herbalsStatus: "done"
 });
+
+
+
+const applyRecipeFetch = (state, action) => ({
+  ...state,
+  recipe: null,
+  recipeStatus: "fetching"
+});
+
+const applyRecipe = (state, action) => ({
+  ...state,
+  recipe: action.recipe,
+  recipeStatus: "done"
+});
+
+
 
 const applyShowDisease = (state, action) => ({
   ...state,
@@ -82,6 +106,19 @@ export function modalReducer(state = INITIAL_STATE, action) {
       console.log(action.type)
       return applyHerbals(state, action);
     }
+
+
+    case 'FULLVIEW_RECIPE_FETCH': {
+      console.log(action.type)
+      return applyRecipeFetch(state, action);
+    }
+    case 'FULLVIEW_RECIPE': {
+      console.log(action.type)
+      return applyRecipe(state, action);
+    }
+
+
+
     case 'SHOW_DISEASE': {
       console.log(action.type)
       return applyShowDisease(state, action);
