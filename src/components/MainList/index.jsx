@@ -30,7 +30,7 @@ export class MainList extends Component {
     herbalList: [],
     searchList: [],
     lastSnapshot: null,
-    limit: 1,
+    limit: 10,
   }
 
   processData = () => {
@@ -221,7 +221,7 @@ export class MainList extends Component {
   }
 
   handleHerbalSubClick = (title, parentRef) => {
-    console.log("Herbal sub click", parentRef)
+    // console.log("Herbal sub click", parentRef)
     if (parentRef) {
       const body = parentRef.data()
       this.props.showFullView(`${title} `, body, true)
@@ -304,48 +304,49 @@ export class MainList extends Component {
                 :
                 <ul className="list-unstyled">
                   {isSearching || isSearchDone ?
-                    <>
-                      {this.props.diseaseResult.map((snap, i) => {
-                        const data = snap.data()
-                        const title = data.diseaseName && "โรค" + data.diseaseName
-                        const description = data.description
-                        const subItems = data.recipes
-                        const image = data.image ? getDownloadUrl(storageConfig.disease_images_path, data.image) : `holder.js/400x400?text=ไม่มีภาพ`
-                        console.log(subItems)
-                        return <MediaItem
-                          showBy={showBy}
-                          key={`media-${i}`}
-                          uid={`media-${i}`}
-                          prefix="ตำรับ"
-                          title={title}
-                          content={description}
-                          subItems={subItems}
-                          snapRef={snap}
-                          image={image}
-                          onImageClick={this.handleImageClick}
-                          onSubClick={this.handleSubClick}
-                        />
-                      })}
-                      {this.props.herbalResult.map((snap, i) => {
-                        const data = snap.data()
-                        const title = data.herbalName
-                        const description = data.description
-                        const image = data.image ? getDownloadUrl(storageConfig.herbal_images_path, data.image) : `holder.js/400x400?text=ไม่มีภาพ`
+                    this.props.diseaseResult.length === 0 && this.props.herbalResult.length === 0 ? <div className="text-center my-3">ไม่พบอะไรเลยจ้ะ</div> :
+                      <>
+                        {this.props.diseaseResult.map((snap, i) => {
+                          const data = snap.data()
+                          const title = data.diseaseName && "โรค" + data.diseaseName
+                          const description = data.description
+                          const subItems = data.recipes
+                          const image = data.image ? getDownloadUrl(storageConfig.disease_images_path, data.image) : `holder.js/400x400?text=ไม่มีภาพ`
+                          console.log(subItems)
+                          return <MediaItem
+                            showBy={showBy}
+                            key={`media-${i}`}
+                            uid={`media-${i}`}
+                            prefix="ตำรับ"
+                            title={title}
+                            content={description}
+                            subItems={subItems}
+                            snapRef={snap}
+                            image={image}
+                            onImageClick={this.handleImageClick}
+                            onSubClick={this.handleSubClick}
+                          />
+                        })}
+                        {this.props.herbalResult.map((snap, i) => {
+                          const data = snap.data()
+                          const title = data.herbalName
+                          const description = data.description
+                          const image = data.image ? getDownloadUrl(storageConfig.herbal_images_path, data.image) : `holder.js/400x400?text=ไม่มีภาพ`
 
-                        return <MediaItem
-                          showBy={showBy}
-                          key={`media-${i}`}
-                          uid={`media-${i}`}
-                          showMoreInfoButton="true"
-                          title={title}
-                          content={description}
-                          snapRef={snap}
-                          image={image}
-                          onImageClick={this.handleImageClick}
-                          onSubClick={this.handleHerbalSubClick}
-                        />
-                      })}
-                    </>
+                          return <MediaItem
+                            showBy={showBy}
+                            key={`media-${i}`}
+                            uid={`media-${i}`}
+                            showMoreInfoButton="true"
+                            title={title}
+                            content={description}
+                            snapRef={snap}
+                            image={image}
+                            onImageClick={this.handleImageClick}
+                            onSubClick={this.handleHerbalSubClick}
+                          />
+                        })}
+                      </>
                     :
                     diseaseList.length === 0 && herbalList.length === 0 ?
                       <div className="text-center my-3">ไม่พบอะไรเลยจ้ะ</div>
@@ -357,7 +358,7 @@ export class MainList extends Component {
                           const description = data.description
                           const subItems = data.recipes
                           const image = data.image ? getDownloadUrl(storageConfig.disease_images_path, data.image) : `holder.js/400x400?text=ไม่มีภาพ`
-                          console.log(subItems)
+                          // console.log(subItems)
                           return <MediaItem
                             showBy={showBy}
                             key={`media-${i}`}
