@@ -39,6 +39,7 @@ class RecipeModal extends Component {
     showAdd: false,
     diseases: [],
     herbals: [],
+    // tags: [],
     /** @type {firebase.firestore.DocumentReference[]} */
     recipes: {},
     updating: false,
@@ -54,7 +55,8 @@ class RecipeModal extends Component {
       showPublic: true,
       /** @type {firebase.firestore.DocumentReference[]} */
       herbalRefs: [],
-      herbals: []
+      herbals: [],
+      // tag: ""
     },
     /** @type {firebase.firestore.DocumentSnapshot} */
     updateDocSnapshot: null,
@@ -73,10 +75,26 @@ class RecipeModal extends Component {
     if (nextProps.show && !recipesListener) {
       this.startListen()
       this.fetchHerbalDisease()
+      // this.fetchTags()
     } else if (!nextProps.show) {
       this.stopListen()
     }
   }
+
+  // fetchTags = () => {
+  //   /** @type {firebase.firestore.Firestore} */
+  //   const firestore = this.props.firestore
+  //   const tagsRef = firestore.collection('tags')
+
+  //   tagsRef.get().then(({ docs }) => {
+  //     const tags = docs && docs.map(doc => {
+  //       const data = doc.data()
+  //       return data.tagName
+  //     })
+  //     console.log("tags",tags)
+  //     this.setState({ tags })
+  //   })
+  // }
 
   fetchHerbalDisease = () => {
     /** @type {firebase.firestore.Firestore} */
@@ -111,7 +129,7 @@ class RecipeModal extends Component {
     const recipesRef = firestore.collection('recipes')
 
     if (!recipesListener) {
-      console.log("startListen")
+      console.log("startListen: recipes")
       let query = recipesRef.orderBy('diseaseName').limit(this.state.limit)
       if (next) {
         query = recipesRef.orderBy('diseaseName').limit(this.state.limit).startAfter(this.state.lastVisible)
@@ -227,6 +245,13 @@ class RecipeModal extends Component {
       data: { ...this.state.data, showPublic: e.target.value === "true" }
     })
   }
+
+  // handleTagChange = (e) => {
+  //   console.log(e.target.value)
+  //   this.setState({
+  //     data: { ...this.state.data, tag: e.target.value }
+  //   })
+  // }
 
   handleDiseaseChange = (e) => {
     const diseaseRef = e && e.ref
@@ -353,7 +378,8 @@ class RecipeModal extends Component {
         diseaseRef: null,
         showPublic: true,
         herbalRefs: [],
-        herbals: []
+        herbals: [],
+        tag: ""
       },
       updateDocSnapshot: null,
       // selectDisease: "",
@@ -466,10 +492,12 @@ class RecipeModal extends Component {
         data={data}
         herbals={herbals}
         diseases={diseases}
+        // tags={tags}
         selectDisease={data.diseaseName}
         selectHerbals={data.herbals}
         onChange={this.handleChange}
         handleShowPublicChange={this.handleShowPublicChange}
+        handleTagChange={this.handleTagChange}
         handleDiseaseChange={this.handleDiseaseChange}
         onSelectHerbalChange={this.handleSelectHerbalChange}
         handleHealChange={this.handleHealChange}
@@ -511,7 +539,7 @@ const RecipeList = ({ recipes, handleAdd, handleEdit, prevDisable, nextDisable, 
             <th style={{ minWidth: "5rem" }}>วิธีการ</th>
             <th>สมุนไพร</th>
             <th className="text-center" style={{ width: "5%" }}><FaEye /></th>
-            <th className="text-center" style={{ width: "10%" }}><FaTools /></th>
+            <th className="text-center" style={{ minWidth: "81px" }}><FaTools /></th>
           </tr>
         </thead>
         <tbody>
@@ -541,7 +569,7 @@ const RecipeList = ({ recipes, handleAdd, handleEdit, prevDisable, nextDisable, 
     </div>
   </>
 
-const RecipeForm = ({ data: { recipeName, description, diseaseName, showPublic, heal, herbals: selectHerbals }, diseases, herbals, onChange, handleShowPublicChange, handleDiseaseChange, onSelectHerbalChange, handleHealChange }) =>
+const RecipeForm = ({ data: { recipeName, description, diseaseName, showPublic, heal, herbals: selectHerbals, tag }, diseases, herbals, onChange, handleShowPublicChange, handleDiseaseChange, onSelectHerbalChange, handleHealChange, handleTagChange }) =>
 
   <Form autoComplete="off">
     <Form.Group as={Row}>
@@ -611,6 +639,18 @@ const RecipeForm = ({ data: { recipeName, description, diseaseName, showPublic, 
         />
       </Col>
     </Form.Group>
+
+    {/* <Form.Group as={Row}>
+      <Form.Label column sm="2">หมวดหมู่</Form.Label>
+      <Col sm="3">
+        <Form.Control as="select" name="tag" value={tag} onChange={handleTagChange}>
+          <option value="ไม่กำหนด">ไม่กำหนด</option>
+          {tags && tags.map((item, i) => {
+            return <option key={`tag-${i}`} value={item}>{item}</option>
+          })}
+        </Form.Control>
+      </Col>
+    </Form.Group> */}
 
     <Form.Group as={Row}>
       <Form.Label column sm="2">แสดงต่อสาธารณะ</Form.Label>

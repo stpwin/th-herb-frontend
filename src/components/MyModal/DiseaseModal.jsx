@@ -20,11 +20,13 @@ const images_path = storageConfig.disease_images_path
 let diseasesListener
 class DiseaseModal extends Component {
   state = {
+    tags: [],
     data: {
       diseaseName: "",
       description: "",
       showPublic: true,
       image: "",
+      tag: ""
     },
     showAdd: false,
     showGallery: false,
@@ -38,9 +40,25 @@ class DiseaseModal extends Component {
     updateDocSnapshot: null
   }
 
+  fetchTags = () => {
+    /** @type {firebase.firestore.Firestore} */
+    const firestore = this.props.firestore
+    const tagsRef = firestore.collection('tags')
+
+    tagsRef.get().then(({ docs }) => {
+      const tags = docs && docs.map(doc => {
+        const data = doc.data()
+        return data.tagName
+      })
+      console.log("tags", tags)
+      this.setState({ tags })
+    })
+  }
+
   componentWillReceiveProps(nextProps) {
     if (nextProps.show && !diseasesListener) {
       this.startListen()
+      this.fetchTags()
     } else if (!nextProps.show) {
       this.stopListen()
     }
@@ -98,6 +116,13 @@ class DiseaseModal extends Component {
 
   handleShowPublicChange = (e) => {
     this.setState({ data: { ...this.state.data, showPublic: e.target.value === "true" } })
+  }
+
+  handleTagChange = (e) => {
+    console.log(e.target.value)
+    this.setState({
+      data: { ...this.state.data, tag: e.target.value }
+    })
   }
 
   handleShowGallery = () => {
@@ -230,6 +255,7 @@ class DiseaseModal extends Component {
         description: "",
         showPublic: true,
         image: "",
+        tag: ""
       },
       selectedImageSrc: "",
       updateDocSnapshot: null,
@@ -273,7 +299,7 @@ class DiseaseModal extends Component {
   }
 
   render() {
-    const { data, diseases, showAdd, showGallery, showUpload, galleryImages, fetchGalleryImage, selectedImageSrc, updating, updateDocSnapshot } = this.state
+    const { data, diseases, showAdd, showGallery, showUpload, galleryImages, fetchGalleryImage, selectedImageSrc, updating, updateDocSnapshot, tags } = this.state
     const { onHide } = this.props
 
     let modalTitle = "จัดการข้อมูลโรค"
@@ -300,11 +326,13 @@ class DiseaseModal extends Component {
 
       modalBody = <DiseaseForm
         data={data}
+        tags={tags}
         selectedImageSrc={selectedImageSrc}
         onChange={this.handleChange}
         handleShowGallery={this.handleShowGallery}
         handleShowUpload={this.handleShowUpload}
         handleShowPublicChange={this.handleShowPublicChange}
+        handleTagChange={this.handleTagChange}
       />
     } else if (showUpload) {
       modalSubTitle = subtitle + " > อัพโหลดภาพ"
@@ -358,7 +386,7 @@ const DiseaseList = ({ diseases, handleAdd, handleEdit, handleDelete }) =>
             <th style={{ width: "20%" }}>ชื่อโรค</th>
             <th style={{ width: "55%" }}>รายละเอียด</th>
             <th className="text-center" style={{ width: "5%" }}><FaEye /></th>
-            <th className="text-center" style={{ width: "10%" }}><FaTools /></th>
+            <th className="text-center" style={{ minWidth: "81px" }}><FaTools /></th>
           </tr>
         </thead>
         <tbody>
@@ -386,7 +414,7 @@ const DiseaseList = ({ diseases, handleAdd, handleEdit, handleDelete }) =>
 
 
 
-const DiseaseForm = ({ data: { diseaseName, description, showPublic }, selectedImageSrc, onChange, handleShowGallery, handleShowUpload, handleShowPublicChange }) => <Form>
+const DiseaseForm = ({ data: { diseaseName, description, showPublic, tag }, selectedImageSrc, onChange, handleShowGallery, handleShowUpload, handleShowPublicChange, tags, handleTagChange }) => <Form>
   <Form.Group as={Row}>
     <Form.Label column sm="2">ชื่อโรค</Form.Label>
     <Col sm="10">
@@ -398,6 +426,18 @@ const DiseaseForm = ({ data: { diseaseName, description, showPublic }, selectedI
     <Form.Label column sm="2">รายละเอียด</Form.Label>
     <Col sm="10">
       <Form.Control as="textarea" rows="14" name="description" value={description} onChange={onChange} />
+    </Col>
+  </Form.Group>
+
+  <Form.Group as={Row}>
+    <Form.Label column sm="2">หมวดหมู่</Form.Label>
+    <Col sm="3">
+      <Form.Control as="select" name="tag" value={tag} onChange={handleTagChange}>
+        <option value="ไม่กำหนด">ไม่กำหนด</option>
+        {tags && tags.map((item, i) => {
+          return <option key={`tag-${i}`} value={item}>{item}</option>
+        })}
+      </Form.Control>
     </Col>
   </Form.Group>
 

@@ -7,7 +7,7 @@ import { storageConfig } from "../../config"
 
 import { Spinner, Container, Row, Col, Button, Dropdown } from "react-bootstrap"
 import MediaItem from "./MediaItem"
-import { DiseaseModal, HerbalModal, RecipeModal } from "../MyModal"
+import { DiseaseModal, HerbalModal, RecipeModal, TagsModal } from "../MyModal"
 
 import "./mainList.css"
 
@@ -16,13 +16,12 @@ const showItems = [
   { name: "สมุนไพร", ref: "รักษาโรค" }
 ]
 
-// let recipesListener = null
-// let diseaseListener = null
 export class MainList extends Component {
   state = {
     diseaseModal: false,
     herbalModal: false,
     recipeModal: false,
+    tagsModal: false,
     showBy: "โรค",
     /**@type {firebase.firestore.QueryDocumentSnapshot[]} */
     diseaseList: [],
@@ -34,7 +33,6 @@ export class MainList extends Component {
   }
 
   processData = () => {
-    // const { showBy } = this.state
     this.props.doneFetch({})
   }
 
@@ -98,12 +96,7 @@ export class MainList extends Component {
     })
   }
 
-  componentWillReceiveProps(nextProps) {
-    // console.log(nextProps)
-  }
-
   componentDidMount() {
-    console.log("componentDidMount")
     const key = localStorage.getItem("showBy")
     if (key) {
       this.setState({
@@ -114,10 +107,10 @@ export class MainList extends Component {
     /**@type {firebase.auth.Auth} */
     const auth = this.props.firebase.auth()
     auth.onAuthStateChanged(user => {
-      // if (user) {
-      // }
-      this.startFetch()
-      // console.log(this.props)
+
+      //Enable this
+      this.startFetch() 
+
     })
   }
 
@@ -166,6 +159,18 @@ export class MainList extends Component {
   handleAddRecipe = () => {
     this.setState({
       recipeModal: true
+    })
+  }
+
+  handleShowTagsModal = () => {
+    this.setState({
+      tagsModal: true
+    })
+  }
+
+  handleHideTagsModal = () => {
+    this.setState({
+      tagsModal: false
     })
   }
 
@@ -230,7 +235,7 @@ export class MainList extends Component {
 
   render() {
     // console.log(this.state.diseases)
-    const { diseaseModal, herbalModal, recipeModal, showBy, diseaseList, herbalList } = this.state
+    const { diseaseModal, herbalModal, recipeModal, showBy, diseaseList, herbalList, tagsModal } = this.state
 
     const isSearching = this.props.status === "searching"
     const isSearchDone = this.props.status === "searchdone"
@@ -255,6 +260,9 @@ export class MainList extends Component {
               <Col xs lg={3}>
                 <Button variant="outline-primary" className="manage-button mb-1" block onClick={this.handleAddRecipe}>จัดการตำรับ</Button>
               </Col>
+              <Col xs lg={3}>
+                <Button variant="outline-primary" className="manage-button mb-1" block onClick={this.handleShowTagsModal}>จัดการหมวดหมู่</Button>
+              </Col>
             </Row>
             <DiseaseModal
               show={diseaseModal}
@@ -267,6 +275,10 @@ export class MainList extends Component {
             <RecipeModal
               show={recipeModal}
               onHide={this.handleHideRecipeModal}
+            />
+            <TagsModal
+              show={tagsModal}
+              onHide={this.handleHideTagsModal}
             />
           </> : null}
 
@@ -281,11 +293,11 @@ export class MainList extends Component {
                     {showBy}
                   </Dropdown.Toggle>
                   <Dropdown.Menu id="dropdown-item-button" title="แสดงตาม">
-                    {showItems.map((item, i) => {
+                    {showItems.map((item, ii) => {
                       if (item.name === showBy) {
-                        return <Dropdown.Item key={`showBy-${i}`} eventKey={i} active onSelect={this.handleShowBySelect}>{item.name}</Dropdown.Item>
+                        return <Dropdown.Item key={`showBy-${ii}`} eventKey={`${ii}`} active onSelect={this.handleShowBySelect}>{item.name}</Dropdown.Item>
                       }
-                      return <Dropdown.Item key={`showBy-${i}`} eventKey={i} onSelect={this.handleShowBySelect}>{item.name}</Dropdown.Item>
+                      return <Dropdown.Item key={`showBy-${ii}`} eventKey={`${ii}`} onSelect={this.handleShowBySelect}>{item.name}</Dropdown.Item>
                     })}
                   </Dropdown.Menu>
                 </Dropdown>
@@ -312,6 +324,7 @@ export class MainList extends Component {
                           const description = data.description
                           const subItems = data.recipes
                           const image = data.image ? getDownloadUrl(storageConfig.disease_images_path, data.image) : `holder.js/400x400?text=ไม่มีภาพ`
+                          const tag = data.tag
                           console.log(subItems)
                           return <MediaItem
                             showBy={showBy}
@@ -319,6 +332,7 @@ export class MainList extends Component {
                             uid={`media-${i}`}
                             prefix="ตำรับ"
                             title={title}
+                            mytag={tag}
                             content={description}
                             subItems={subItems}
                             snapRef={snap}
@@ -358,6 +372,7 @@ export class MainList extends Component {
                           const description = data.description
                           const subItems = data.recipes
                           const image = data.image ? getDownloadUrl(storageConfig.disease_images_path, data.image) : `holder.js/400x400?text=ไม่มีภาพ`
+                          const tag = data.tag
                           // console.log(subItems)
                           return <MediaItem
                             showBy={showBy}
@@ -365,6 +380,7 @@ export class MainList extends Component {
                             uid={`media-${i}`}
                             prefix="ตำรับ"
                             title={title}
+                            mytag={tag}
                             content={description}
                             subItems={subItems}
                             snapRef={snap}

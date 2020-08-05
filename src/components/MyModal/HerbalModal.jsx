@@ -342,7 +342,7 @@ const HerbalList = ({ herbals, handleAdd, handleEdit, handleDelete }) =>
             <th>ชื่อท้องถิ่น</th>
             <th>สรรพคุณ</th>
             <th className="text-center" style={{ width: "5%" }}><FaEye /></th>
-            <th className="text-center" style={{ width: "10%" }}><FaTools /></th>
+            <th className="text-center" style={{ minWidth: "81px" }}><FaTools /></th>
           </tr>
         </thead>
         <tbody>

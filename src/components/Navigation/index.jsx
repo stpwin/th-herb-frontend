@@ -14,7 +14,15 @@ export class Navigation extends Component {
   render() {
     return (
       <Navbar bg="light" expand="lg">
-        <Navbar.Brand href="/">Thai Herbal Pharm</Navbar.Brand>
+        <Navbar.Brand href="/">
+          <img
+            alt=""
+            src="/logo192.png"
+            width="30"
+            height="30"
+            className="d-inline-block align-top"
+          />{' '}
+          Thai Herbal Pharm</Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="mr-auto">
