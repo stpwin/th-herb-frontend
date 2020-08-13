@@ -13,7 +13,8 @@ import "./mainList.css"
 
 const showItems = [
   { name: "โรค", ref: "ตำหรับ" },
-  { name: "สมุนไพร", ref: "รักษาโรค" }
+  { name: "สมุนไพร", ref: "รักษาโรค" },
+  { name: "หมวดหมู่", ref: "ตำหรับ" }
 ]
 
 export class MainList extends Component {

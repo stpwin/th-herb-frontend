@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from "prop-types"
 
-import { Container, Button, Image, Row, Col, Badge } from "react-bootstrap"
+import { Container, Button, Image, Row, Col } from "react-bootstrap"
 // import { FaBars, FaPlusCircle } from "react-icons/fa"
 
 import "./mediaItem.css"
@@ -53,9 +53,10 @@ export default class MediaItem extends Component {
               </Row>
               <Row>
                 <Col>
-                  <Button variant="primary" size="sm" className="custom-button">
-                    {this.props.mytag || "ไม่มีหมวดหมู่"}
-                  </Button>
+                  {this.props.mytag ? <Button variant="primary" size="sm" className="custom-button">
+                    {this.props.mytag}
+                  </Button> : null}
+                  
                 </Col>
               </Row>
               <Row>
