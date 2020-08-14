@@ -53,9 +53,9 @@ export default class MediaItem extends Component {
               </Row>
               <Row>
                 <Col>
-                  {this.props.mytag ? <Button variant="primary" size="sm" className="custom-button">
+                  {this.props.mytag && <Button variant="primary" size="sm" className="custom-button">
                     {this.props.mytag}
-                  </Button> : null}
+                  </Button>}
                   
                 </Col>
               </Row>

@@ -27,6 +27,14 @@
   -webkit-box-orient: vertical;
 }
 
+.item-content-small {
+  max-height: 225px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
 .custom-badge {
   line-height: 1.5 !important;
   border-radius: 0.1rem !important;
