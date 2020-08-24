@@ -7,8 +7,10 @@ import { storageConfig } from "../../config"
 
 import { Spinner, Container, Row, Col, Button, Dropdown } from "react-bootstrap"
 import MediaItem from "./MediaItem"
-import {TagItem} from "./TagItem"
+// import { TagItem } from "./TagItem"
+import { FetchResultTag } from './FetchResultTag'
 import { DiseaseModal, HerbalModal, RecipeModal, TagsModal } from "../MyModal"
+import TagView from "./TagView"
 
 import "./mainList.css"
 
@@ -33,10 +35,12 @@ export class MainList extends Component {
     tags: [],
     lastSnapshot: null,
     limit: 10,
+    /**@type {firebase.firestore.QueryDocumentSnapshot[]} */
+    diseasesByTag: []
   }
 
   processData = () => {
-    console.log(this.state.tags)
+    // console.log(this.state.tags)
     this.props.doneFetch({})
   }
 
@@ -48,20 +52,20 @@ export class MainList extends Component {
 
     if (this.state.showBy === "โรค") { //|| this.state.showBy === "หมวดหมู่"
       const diseaseRef = firestore.collection('diseases').where('showPublic', '==', true).orderBy('diseaseName').startAfter(this.state.lastSnapshot).limit(this.state.limit)
-      const tagsRef = firestore.collection('tags').orderBy('tagName')
+      // const tagsRef = firestore.collection('tags').orderBy('tagName')
       // return tagsRef.get().then(tagsSnap => {
-        // return tagsSnap.docs
+      // return tagsSnap.docs
       // }).then((tagDocs) => {
-        return diseaseRef.get().then(diseaseSnap => {
-          this.setState({
-            herbalList: [],
-            diseaseList: [...this.state.diseaseList, ...diseaseSnap.docs],
-            lastSnapshot: diseaseSnap.docs.length > 0 && diseaseSnap.docs[diseaseSnap.docs.length - 1],
-            // tags: tagDocs
-          }, this.processData)
-        }, (error) => {
-          console.warn(error)
-        })
+      return diseaseRef.get().then(diseaseSnap => {
+        this.setState({
+          herbalList: [],
+          diseaseList: [...this.state.diseaseList, ...diseaseSnap.docs],
+          lastSnapshot: diseaseSnap.docs.length > 0 && diseaseSnap.docs[diseaseSnap.docs.length - 1],
+          // tags: tagDocs
+        }, this.processData)
+      }, (error) => {
+        console.warn(error)
+      })
       // })
     }
 
@@ -78,7 +82,7 @@ export class MainList extends Component {
   }
 
   startFetch = () => {
-    console.log("startFetch")
+    console.log("Start Fetching...")
     /**@type {firebase.firestore.Firestore} */
     const firestore = this.props.firestore
     if (this.state.showBy === "โรค" || this.state.showBy === "หมวดหมู่") {
@@ -88,11 +92,13 @@ export class MainList extends Component {
       } else {
         diseaseRef = firestore.collection('diseases').where('showPublic', '==', true).orderBy('diseaseName').limit(this.state.limit)
       }
-      
+      console.log("Fetching tags...")
       const tagsRef = firestore.collection('tags').orderBy('tagName')//.limit(this.state.limit)
       return tagsRef.get().then(tagsSnap => {
+        console.log("Fetch tags done")
         return tagsSnap.docs
       }).then((tagDocs) => {
+        console.log("Fetch disease done")
         return diseaseRef.get().then(diseaseSnap => {
           this.setState({
             herbalList: [],
@@ -103,6 +109,8 @@ export class MainList extends Component {
         }, (error) => {
           console.warn(error)
         })
+      }).catch(err => {
+        console.error(err)
       })
 
     }
@@ -131,9 +139,12 @@ export class MainList extends Component {
     const auth = this.props.firebase.auth()
     auth.onAuthStateChanged(user => {
 
+      // console.log(user)
       //Enable this
-      this.startFetch() 
+      this.startFetch()
 
+    }, (error) => {
+      console.warn(error)
     })
   }
 
@@ -223,7 +234,7 @@ export class MainList extends Component {
         this.props.fullViewHerbals(herbals)
       })
     }
-    
+
   }
 
   /**@param {firebase.firestore.DocumentReference} ref */
@@ -258,12 +269,35 @@ export class MainList extends Component {
     }
   }
 
+  handleTagClick = tagName => {
+    if (!tagName) return
+    /**@type {firebase.firestore.Firestore} */
+    const firestore = this.props.firestore
+    const diseaseRef = firestore.collection('diseases').where('showPublic', '==', true).where('tag', '==', tagName).orderBy('diseaseName')
+    diseaseRef.get().then(diseaseSnap => {
+      // console.log(diseaseSnap.docs)
+      this.setState({
+        diseasesByTag: diseaseSnap.docs,
+      }, this.processData)
+    }, (error) => {
+      console.warn(error)
+    })
+
+    this.props.showTagView(tagName)
+  }
+
+  handleTagViewGoBack = () => {
+    this.props.hideTagView()
+  }
+
   render() {
     // console.log(this.state.diseases)
-    const { diseaseModal, herbalModal, recipeModal, showBy, diseaseList, herbalList, tagsModal, tags } = this.state
+    const { diseaseModal, herbalModal, recipeModal, showBy, diseaseList, herbalList, tagsModal, tags, diseasesByTag } = this.state
 
     const isSearching = this.props.status === "searching"
     const isSearchDone = this.props.status === "searchdone"
+    const isShowTagView = this.props.isShowTagView
+    const showTagViewName = this.props.tagName
     // const searchResult = this.props.searchResult
 
     const isMoreFetching = this.props.status === "more-fetching"
@@ -281,9 +315,9 @@ export class MainList extends Component {
             onShowTagsModal={this.handleShowTagsModal}
           />
             <DiseaseModal
-            show={diseaseModal}
-            onHide={this.handleHideDiseaseModal}
-          />
+              show={diseaseModal}
+              onHide={this.handleHideDiseaseModal}
+            />
             <HerbalModal
               show={herbalModal}
               onHide={this.handleHideHerbalModal}
@@ -298,12 +332,18 @@ export class MainList extends Component {
             /> </> : null}
 
         {/* Hide ShowByDropdown when in search mode */}
-        {isSearching || isSearchDone ? null : <ShowByDropdown showBy={showBy} showItems={showItems} onShowBySelect={this.handleShowBySelect} />}
+        {isSearching || isSearchDone || isShowTagView ? null : <ShowByDropdown showBy={showBy} showItems={showItems} onShowBySelect={this.handleShowBySelect} />}
         <Row>
           <Col>
             <div className="main-list">
-              {(isFetching || isSearching) ?
-                <Fetching />
+              {(isFetching || isSearching || isShowTagView) ?
+                (isShowTagView ? <TagView
+                  onGoBack={this.handleTagViewGoBack}
+                  onImageClick={this.handleImageClick}
+                  onSubClick={this.handleSubClick}
+                  onTagClick={this.handleTagClick}
+                  tagName={showTagViewName}
+                  items={diseasesByTag} /> : <Fetching />)
                 :
                 <ul className="list-unstyled">
                   {isSearching || isSearchDone ?
@@ -315,6 +355,7 @@ export class MainList extends Component {
                         onSubClick={this.handleSubClick}
                         onImageClick={this.handleImageClick}
                         onHerbalSubClick={this.handleHerbalSubClick}
+                        onTagClick={this.handleTagClick}
                       />)
                     :
                     (diseaseList.length === 0 && herbalList.length === 0 ? <Nothing /> :
@@ -325,8 +366,9 @@ export class MainList extends Component {
                           tags={tags}
                           onImageClick={this.handleImageClick}
                           onSubClick={this.handleSubClick}
+                          onTagClick={this.handleTagClick}
                         />)
-                        : 
+                        :
                         (<FetchResult
                           diseaseList={diseaseList}
                           herbalList={herbalList}
@@ -336,6 +378,7 @@ export class MainList extends Component {
                           onSubClick={this.handleSubClick}
                           onHerbalSubClick={this.handleHerbalSubClick}
                           isMoreFetching={isMoreFetching}
+                          onTagClick={this.handleTagClick}
                           fetchAnotherDisable={isSearching || isSearchDone || isFetching || isMoreFetching} />)
                     )
                   }
@@ -349,63 +392,30 @@ export class MainList extends Component {
   }
 }
 
-const FetchResultTag = ({ diseaseList, tags, onImageClick, onSubClick, showBy }) => {
-  let tagList = {}
 
-  diseaseList.map((snap, i) => {
-    const data = snap.data()
-    if (!tagList[data.tag]) {
-      tagList[data.tag] = [snap]
-    } else {
-      tagList[data.tag].push(snap)
-    }
-  })
-  // console.log(tagList)
-  return <>
-
-  {tags.map((snap, i) => {
-    const data = snap.data()
-    const title = data.tagName
-    if (tagList[title] && tagList[title].length > 0) {
-      return <TagItem
-      showBy={showBy}
-      key={`media-${i}`}
-      uid={`media-${i}`}
-      prefix="ตำรับ"
-      title={title}
-      subItems={tagList[title]}
-      onImageClick={onImageClick}
-      onSubClick={onSubClick}
-    />
-    }
-    
-  })}
-
-</>
-}
 
 const ShowByDropdown = ({ showBy, showItems, onShowBySelect }) =>
   <div className="filter-item">
-  <Row>
-    <Col className="mb-3" style={{ display: "flex" }} sm={5}>
-      <div className="mr-2" style={{ alignSelf: "center" }}>แสดงตาม</div>
-      <Dropdown>
-        <Dropdown.Toggle variant="outline-secondary" size="sm">
-          {showBy}
-        </Dropdown.Toggle>
-        <Dropdown.Menu id="dropdown-item-button" title="แสดงตาม">
-          {showItems.map((item, ii) => {
-            if (item.name === showBy) {
-              return <Dropdown.Item key={`showBy-${ii}`} eventKey={`${ii}`} active onSelect={onShowBySelect}>{item.name}</Dropdown.Item>
-            }
-            return <Dropdown.Item key={`showBy-${ii}`} eventKey={`${ii}`} onSelect={onShowBySelect}>{item.name}</Dropdown.Item>
-          })}
-        </Dropdown.Menu>
-      </Dropdown>
-    </Col>
-    <Col></Col>
-  </Row>
-</div>
+    <Row>
+      <Col className="mb-3" style={{ display: "flex" }} sm={5}>
+        <div className="mr-2" style={{ alignSelf: "center" }}>แสดงตาม</div>
+        <Dropdown>
+          <Dropdown.Toggle variant="outline-secondary" size="sm">
+            {showBy}
+          </Dropdown.Toggle>
+          <Dropdown.Menu id="dropdown-item-button" title="แสดงตาม">
+            {showItems.map((item, ii) => {
+              if (item.name === showBy) {
+                return <Dropdown.Item key={`showBy-${ii}`} eventKey={`${ii}`} active onSelect={onShowBySelect}>{item.name}</Dropdown.Item>
+              }
+              return <Dropdown.Item key={`showBy-${ii}`} eventKey={`${ii}`} onSelect={onShowBySelect}>{item.name}</Dropdown.Item>
+            })}
+          </Dropdown.Menu>
+        </Dropdown>
+      </Col>
+      <Col></Col>
+    </Row>
+  </div>
 
 const Nothing = () => <div className="text-center my-3">ไม่พบอะไรเลยจ้ะ</div>
 
@@ -430,7 +440,7 @@ const AdminButtons = ({ onAddDisease, onAddHerbal, onAddRecipe, onShowTagsModal 
   </Row>
 </>
 
-const SearchResult = ({ diseaseResult, herbalResult, onSubClick, onImageClick, onHerbalSubClick, showBy}) => 
+const SearchResult = ({ diseaseResult, herbalResult, onSubClick, onImageClick, onHerbalSubClick, showBy, onTagClick }) =>
   <>
     {diseaseResult.map((snap, i) => {
       const data = snap.data()
@@ -453,6 +463,7 @@ const SearchResult = ({ diseaseResult, herbalResult, onSubClick, onImageClick, o
         image={image}
         onImageClick={onImageClick}
         onSubClick={onSubClick}
+        onTagClick={onTagClick}
       />
     })}
     {herbalResult.map((snap, i) => {
@@ -472,11 +483,12 @@ const SearchResult = ({ diseaseResult, herbalResult, onSubClick, onImageClick, o
         image={image}
         onImageClick={onImageClick}
         onSubClick={onHerbalSubClick}
+        onTagClick={onTagClick}
       />
     })}
   </>
 
-const FetchResult = ({ diseaseList, herbalList, onFetchAnother, fetchAnotherDisable, onImageClick, onSubClick, onHerbalSubClick, isMoreFetching, showBy}) => 
+const FetchResult = ({ diseaseList, herbalList, onFetchAnother, fetchAnotherDisable, onImageClick, onSubClick, onHerbalSubClick, isMoreFetching, showBy, onTagClick }) =>
   <>
     {diseaseList.map((snap, i) => {
       const data = snap.data()
@@ -485,7 +497,7 @@ const FetchResult = ({ diseaseList, herbalList, onFetchAnother, fetchAnotherDisa
       const subItems = data.recipes
       const image = data.image ? getDownloadUrl(storageConfig.disease_images_path, data.image) : `holder.js/400x400?text=ไม่มีภาพ`
       const tag = data.tag
-      
+
       return <MediaItem
         showBy={showBy}
         key={`media-${i}`}
@@ -499,6 +511,7 @@ const FetchResult = ({ diseaseList, herbalList, onFetchAnother, fetchAnotherDisa
         image={image}
         onImageClick={onImageClick}
         onSubClick={onSubClick}
+        onTagClick={onTagClick}
       />
     })}
     {herbalList.map((snap, i) => {
@@ -518,28 +531,29 @@ const FetchResult = ({ diseaseList, herbalList, onFetchAnother, fetchAnotherDisa
         image={image}
         onImageClick={onImageClick}
         onSubClick={onHerbalSubClick}
+        onTagClick={onTagClick}
       />
     })}
-    <ShowAnotherButton onFetchAnother={onFetchAnother} fetchAnotherDisable={fetchAnotherDisable} isMoreFetching={isMoreFetching}/>
+    <ShowAnotherButton onFetchAnother={onFetchAnother} fetchAnotherDisable={fetchAnotherDisable} isMoreFetching={isMoreFetching} />
   </>
 
-const ShowAnotherButton = ({ onFetchAnother, fetchAnotherDisable, isMoreFetching}) => <Col className="text-center">
-      <Button
-        variant="outline-secondary"
-        className="text-center my-3"
-        disabled={fetchAnotherDisable}
-        onClick={onFetchAnother}>
-        {isMoreFetching ?
-          <>
-            <Spinner
-              as="span"
-              animation="grow"
-              size="sm"
-              role="status"
-              aria-hidden="true"
-            /> กำลังโหลด</> : "แสดงเพิ่มเติม"}
-      </Button>
-    </Col>
+const ShowAnotherButton = ({ onFetchAnother, fetchAnotherDisable, isMoreFetching }) => <Col className="text-center">
+  <Button
+    variant="outline-secondary"
+    className="text-center my-3"
+    disabled={fetchAnotherDisable}
+    onClick={onFetchAnother}>
+    {isMoreFetching ?
+      <>
+        <Spinner
+          as="span"
+          animation="grow"
+          size="sm"
+          role="status"
+          aria-hidden="true"
+        /> กำลังโหลด</> : "แสดงเพิ่มเติม"}
+  </Button>
+</Col>
 
 const mapStateToProps = state => ({
   show: state.login.show,
@@ -547,7 +561,9 @@ const mapStateToProps = state => ({
   herbalResult: state.data.herbalResult,
   diseaseResult: state.data.diseaseResult,
   status: state.data.status,
-  authUser: state.login.authUser
+  authUser: state.login.authUser,
+  isShowTagView: state.view.isShowTagView,
+  tagName: state.view.tagName
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -569,6 +585,8 @@ const mapDispatchToProps = dispatch => ({
     dispatch({ type: 'FULLVIEW_RECIPE', recipe }),
   fullViewRecipeFetch: () =>
     dispatch({ type: 'FULLVIEW_RECIPE_FETCH' }),
+  showTagView: (tagName) => dispatch({ type: 'SHOW_TAG_VIEW', tagName }),
+  hideTagView: () => dispatch({ type: 'HIDE_TAG_VIEW' })
 });
 
 export default compose(
